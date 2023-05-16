@@ -61,7 +61,7 @@ namespace flashmatch {
       return ptr;
     }
 
-  private:
+  public:
     /// Static factory container
     std::map<std::string,flashmatch::FlashProhibitFactoryBase*> _factory_map;
     /// Static self

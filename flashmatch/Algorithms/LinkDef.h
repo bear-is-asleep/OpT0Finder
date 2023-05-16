@@ -12,6 +12,7 @@
 //#pragma link C++ class flashmatch::QWeightPoint+;
 //#pragma link C++ class flashmatch::CommonAmps+;
 #pragma link C++ class flashmatch::TimeCompatMatch+;
+#pragma link C++ class flashmatch::TimeYZCompatMatch+;
 #pragma link C++ class flashmatch::MaxNPEWindow+;
 #pragma link C++ class flashmatch::TimeRange+;
 #pragma link C++ class flashmatch::TimeRangeSet+;
@@ -24,5 +25,6 @@
 //#pragma link C++ class flashmatch::ChargeAnalytical+;
 #pragma link C++ class flashmatch::LightPath+;
 #pragma link C++ class flashmatch::NPEFlashFilter+;
+#pragma link C++ class flashmatch::BeamWindowFlashFilter+;
 //ADD_NEW_CLASS ... do not change this line
 #endif

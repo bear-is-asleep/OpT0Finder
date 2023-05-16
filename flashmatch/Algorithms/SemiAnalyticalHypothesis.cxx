@@ -5,7 +5,7 @@
 #include <chrono>
 
 #ifndef USING_LARSOFT
-#define USING_LARSOFT 1
+#define USING_LARSOFT 0
 #endif
 
 using namespace std::chrono;

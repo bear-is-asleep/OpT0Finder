@@ -2,7 +2,7 @@
 #define __OPT0FINDERFMWKINTERFACE_H__
 
 #ifndef USING_LARSOFT
-#define USING_LARSOFT 1
+#define USING_LARSOFT 0
 #endif
 
 #include "OpT0FinderException.h"

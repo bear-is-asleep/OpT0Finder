@@ -1,5 +1,5 @@
 /**
- * \file TimeCompatMatch.h
+ * \file TimeYZCompatMatch.h
  *
  * \ingroup Algorithms
  * 
@@ -11,8 +11,8 @@
 /** \addtogroup Algorithms
 
     @{*/
-#ifndef OPT0FINDER_TIMECOMPATMATCH_H
-#define OPT0FINDER_TIMECOMPATMATCH_H
+#ifndef OPT0FINDER_TIMEYZCOMPATMATCH_H
+#define OPT0FINDER_TIMEYZCOMPATMATCH_H
 
 #ifndef USING_LARSOFT
 #define USING_LARSOFT 0
@@ -43,15 +43,15 @@ namespace flashmatch {
      w.r.t. trigger time, if the two objects are incompatible (because the time-difference
      is larger than a full drift window) the match is not allowed
   */
-  class TimeCompatMatch : public BaseProhibitAlgo {
+  class TimeYZCompatMatch : public BaseProhibitAlgo {
     
   public:
     
     /// Default constructor
-    TimeCompatMatch(const std::string name="TimeCompatMatch");
+    TimeYZCompatMatch(const std::string name="TimeYZCompatMatch");
     
     /// Default destructor
-    ~TimeCompatMatch(){}
+    ~TimeYZCompatMatch(){}
 
     bool MatchCompatible(const QCluster_t& clus, const Flash_t& flash);
 
@@ -65,20 +65,22 @@ namespace flashmatch {
     double _time_window;
     /// Shift in beam timing w.r.t. flash's time reference =0
     double _time_shift;
+    /// Distance in the yz plane between flash and cluster
+    double _yz_distance;
 
   };
 
   /**
-     \class flashmatch::TimeCompatMatchFactory
+     \class flashmatch::TimeYZCompatMatchFactory
   */
-  class TimeCompatMatchFactory : public FlashProhibitFactoryBase {
+  class TimeYZCompatMatchFactory : public FlashProhibitFactoryBase {
   public:
     /// ctor
-    TimeCompatMatchFactory() { FlashProhibitFactory::get().add_factory("TimeCompatMatch",this); }
+    TimeYZCompatMatchFactory() { FlashProhibitFactory::get().add_factory("TimeYZCompatMatch",this); }
     /// dtor
-    ~TimeCompatMatchFactory() {}
+    ~TimeYZCompatMatchFactory() {}
     /// creation method
-    BaseProhibitAlgo* create(const std::string instance_name) { return new TimeCompatMatch(instance_name); }
+    BaseProhibitAlgo* create(const std::string instance_name) { return new TimeYZCompatMatch(instance_name); }
   };
   
 }

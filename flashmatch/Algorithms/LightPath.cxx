@@ -115,6 +115,26 @@ namespace flashmatch {
     */
   }
 
+  QCluster_t LightPath::MakeQCluster(const ::geoalgo::Trajectory& trj,
+                                     const double& ADC_to_MeV) const {
+
+    QCluster_t result;
+    result.clear();
+    assert(trj[0].size() == 4);
+
+    // Add QPoints to QCluster
+    for (size_t i=0; i<trj.size(); i++) {
+      QPoint_t q_pt;
+      q_pt.x = trj[i][0];
+      q_pt.y = trj[i][1];
+      q_pt.z = trj[i][2];
+      q_pt.q = trj[i][3] * _light_yield * ADC_to_MeV;
+      result.emplace_back(q_pt);
+    }
+    FLASH_INFO() << result << std::endl;
+    return result;
+  }
+
 }
 
 

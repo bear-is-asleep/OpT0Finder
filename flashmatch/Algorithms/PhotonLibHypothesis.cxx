@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #ifndef USING_LARSOFT
-#define USING_LARSOFT 1
+#define USING_LARSOFT 0
 #endif
 
 #if USING_LARSOFT == 0
