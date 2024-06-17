@@ -20,6 +20,36 @@ namespace flashmatch{
     << "  PMT count        : " << _pmt_v.size() << std::endl << std::endl << std::flush;
   }
 
+  void DetectorSpecs::EnableCryostats(int cryos, std::vector<double> tpcs_minx, 
+        std::vector<double> tpcs_maxx, 
+        std::vector<double> tpcs_miny,
+        std::vector<double> tpcs_maxy, 
+        std::vector<double> tpcs_minz, 
+        std::vector<double> tpcs_maxz)
+  {
+
+    //Absolute min and max
+    double global_x_min = 1e9, global_x_max = -1e9;
+    double global_y_min = 1e9, global_y_max = -1e9;
+    double global_z_min = 1e9, global_z_max = -1e9;
+
+    //Make vector of bounding boxes for each tpc
+    for(size_t i=0; i<tpcs_minx.size(); ++i){
+      for(size_t j=0; j<_cryos; ++j){
+        _bbox_map[std::pair<int,int>(i,j)] = geoalgo::AABox(tpcs_minx[i],tpcs_miny[i],tpcs_minz[i],tpcs_maxx[i],tpcs_maxy[i],tpcs_maxz[i]);
+        if (tpcs_minx[i] < global_x_min) global_x_min = tpcs_minx[i];
+        if (tpcs_maxx[i] > global_x_max) global_x_max = tpcs_maxx[i];
+        if (tpcs_miny[i] < global_y_min) global_y_min = tpcs_miny[i];
+        if (tpcs_maxy[i] > global_y_max) global_y_max = tpcs_maxy[i];
+        if (tpcs_minz[i] < global_z_min) global_z_min = tpcs_minz[i];
+        if (tpcs_maxz[i] > global_z_max) global_z_max = tpcs_maxz[i];
+      }
+    }
+    // Set bbox to be the bounding box of all tpcs
+    _bbox = geoalgo::AABox(global_x_min, global_y_min, global_z_min,
+                           global_x_max, global_y_max, global_z_max);
+  }
+
 
 }
 
@@ -29,21 +59,67 @@ namespace flashmatch{
   DetectorSpecs::DetectorSpecs(const Config_t& p) 
     : LoggerFeature("DetectorSpecs")
   {
+    size_t ch=0;
+    _pmt_v.clear();
+    while(1) {
+      std::string key = "OpDet" + std::to_string(ch);
+      if(!p.contains_value(key)) break;
+      geoalgo::Point_t pmt(p.get<std::vector<double> >(key));
+      assert(pmt.size()==3);
+      _pmt_v.push_back(pmt);
+      ch++;
+    }
 
-    auto max_pt = p.get<std::vector<double> >("ActiveVolumeMax");
+    _drift_velocity = p.get<double>("DriftVelocity");
+    _light_yield = p.get<double>("LightYield");
+    _MIPdEdx = p.get<double>("MIPdEdx");
+    bool use_photon_library = p.get<bool>("UsePhotonLibrary",true);
+
+    if(!use_photon_library){
+      // optical detector properties
+      fspherical_type = p.get<int>("SphericalType",1);
+      fspherical_orientation = p.get<int>("SphericalOrientation",0);
+      FLASH_DEBUG() <<"fspherical_orientation: "<<fspherical_orientation<<std::endl;
+      fspherical_ids = p.get<std::vector<int>>("SphericalIDs");
+      FLASH_DEBUG() <<"fspherical_ids.size(): "<<fspherical_ids.size()<<std::endl;
+      
+      frectengular_type = p.get<int>("RectangularType",0);
+      frectengular_orientation = p.get<int>("RectangularOrientation",0);
+      frectengular_height = p.get<double>("RectangularHeight",-1.);
+      frectengular_width = p.get<double>("RectangularWidth",-1.);
+      frectengular_ids = p.get<std::vector<int>>("RectangularIDs");
+      FLASH_DEBUG() <<"frectengular_ids.size(): "<<frectengular_ids.size()<<std::endl;
+
+      assert(_pmt_v.size() == fspherical_ids.size() + frectengular_ids.size());
+
+      //Set up bounding box map
+      _tpcs_minx = p.get<std::vector<double> >("TPCsMinX");
+      _tpcs_maxx = p.get<std::vector<double> >("TPCsMaxX");
+      _tpcs_miny = p.get<std::vector<double> >("TPCsMinY");
+      _tpcs_maxy = p.get<std::vector<double> >("TPCsMaxY");
+      _tpcs_minz = p.get<std::vector<double> >("TPCsMinZ");
+      _tpcs_maxz = p.get<std::vector<double> >("TPCsMaxZ");
+      _cryos = p.get<int >("NCryostats");
+
+      EnableCryostats(_cryos, _tpcs_minx, _tpcs_maxx, _tpcs_miny, _tpcs_maxy, _tpcs_minz, _tpcs_maxz);
+
+      return; // If photon library is not used, return here
+    }
+
     auto min_pt = p.get<std::vector<double> >("ActiveVolumeMin");
-    auto photon_max_pt = p.get<std::vector<double> >("PhotonLibraryVolumeMax");
-    auto photon_min_pt = p.get<std::vector<double> >("PhotonLibraryVolumeMin");
-    auto nvoxels = p.get<std::vector<int> >("PhotonLibraryNvoxels");
-    auto nopdetchannels = p.get<int>("PhotonLibraryNOpDetChannels");
+    auto max_pt = p.get<std::vector<double> >("ActiveVolumeMax");
     assert(max_pt.size() == 3);
     assert(min_pt.size() == 3);
     assert(max_pt[0] >= min_pt[0] &&
      max_pt[1] >= min_pt[1] &&
      max_pt[2] >= min_pt[2]);
     _bbox = geoalgo::AABox(min_pt[0],min_pt[1],min_pt[2],max_pt[0],max_pt[1],max_pt[2]);
-    //std::cout<<_bbox.Min()[0]<<" "<<_bbox.Min()[1]<<" "<<_bbox.Min()[2]<<std::endl;
-    //std::cout<<_bbox.Max()[0]<<" "<<_bbox.Max()[1]<<" "<<_bbox.Max()[2]<<std::endl;
+    
+
+    auto nopdetchannels = p.get<int>("PhotonLibraryNOpDetChannels");
+    auto photon_max_pt = p.get<std::vector<double> >("PhotonLibraryVolumeMax");
+    auto photon_min_pt = p.get<std::vector<double> >("PhotonLibraryVolumeMin");
+    auto nvoxels = p.get<std::vector<int> >("PhotonLibraryNvoxels");
 
     assert(photon_max_pt.size() == 3);
     assert(photon_min_pt.size() == 3);
@@ -65,20 +141,6 @@ namespace flashmatch{
     photon_library.SetNvoxelsZ(nvoxels[2]);
     photon_library.SetNOpDetChannels(nopdetchannels);
 
-    size_t ch=0;
-    _pmt_v.clear();
-    while(1) {
-      std::string key = "PMT" + std::to_string(ch);
-      if(!p.contains_value(key)) break;
-      geoalgo::Point_t pmt(p.get<std::vector<double> >(key));
-      assert(pmt.size()==3);
-      _pmt_v.push_back(pmt);
-      ch++;
-    }
-
-    _drift_velocity = p.get<double>("DriftVelocity");
-    _light_yield = p.get<double>("LightYield");
-    _MIPdEdx = p.get<double>("MIPdEdx");
 
   }
 

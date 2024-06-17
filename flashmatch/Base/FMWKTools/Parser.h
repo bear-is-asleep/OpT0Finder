@@ -25,6 +25,8 @@ namespace flashmatch {
     /// Parse flashmatch::PSet configuration file content
     template<> std::string    FromString< std::string    > (const std::string& value );
     /// Parse flashmatch::PSet configuration file content
+    template<> std::vector< std::vector< std::string > > FromString( const std::string& value );
+    /// Parse flashmatch::PSet configuration file content
     template<> float          FromString< float          > (const std::string& value );
     /// Parse flashmatch::PSet configuration file content
     template<> double         FromString< double         > (const std::string& value );
@@ -63,6 +65,14 @@ namespace flashmatch {
     /// Parse flashmatch::PSet configuration file content
     template<> std::vector< bool           > FromString< std::vector< bool           > > (const std::string& value );
     /// Parse flashmatch::PSet configuration file content
+    //template<> std::vector< std::vector< std::string    > > FromString< std::vector< std::vector< std::string    > > > (const std::string& value );
+    /// Parse flashmatch::PSet configuration file content
+    //template<> std::vector< std::vector< float          > > FromString< std::vector< std::vector< float          > > > (const std::string& value );
+    /// Parse flashmatch::PSet configuration file content
+    template<> std::vector< std::vector< double         > > FromString< std::vector< std::vector< double         > > > (const std::string& value );
+    /// Parse flashmatch::PSet configuration file content
+    template<> std::vector<std::vector<std::vector<double>>> FromString<std::vector<std::vector<std::vector<double>>>>(const std::string& value);
+    /// Parse flashmatch::PSet configuration file content
     template <class T> std::string ToString(const T& value)
     { return std::to_string(value); }
     /// Parse flashmatch::PSet configuration file content
@@ -72,11 +82,16 @@ namespace flashmatch {
     {
       std::string res="[";
       for(auto const& v : value)
-	res += ToString(v) + ",";
+        res += ToString(v) + ",";
       res = res.substr(0,res.size()-1);
       res += "]";
       return res;
     }
+    /// Trim white spaces from the beginning and the end of the string
+    std::string Trim(std::string const& str);
+    /// Split the string by the delimiter
+    std::vector<std::string> Split(std::string const& str, const std::string& delim="]");
+    std::vector<std::vector<std::string>> Split2D(std::string const& str, const std::string& delim="]]");
   }
 }
 

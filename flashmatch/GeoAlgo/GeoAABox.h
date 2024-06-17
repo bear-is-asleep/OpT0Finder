@@ -56,6 +56,11 @@ namespace geoalgo {
     void Min(const double x, const double y, const double z); ///< Minimum point setter
     void Max(const double x, const double y, const double z); ///< Maximum point setter
     bool Contain(const Point_t &pt) const; ///< Test if a point is contained within the box
+
+    Point_t Center() const; ///< Center getter
+    double SizeX() const; ///< X-size getter
+    double SizeY() const; ///< Y-size getter
+    double SizeZ() const; ///< Z-size getter
     
   protected:
     

@@ -58,6 +58,9 @@ namespace flashmatch {
     /// Info dump
     void DumpInfo() const;
 
+    /// Access all pmts
+    inline const std::vector<geoalgo::Point_t>& PMTPositions() const { return _pmt_v; }
+
     /// PMT XYZ position filler
     inline const geoalgo::Point_t& PMTPosition(size_t opch) { return _pmt_v.at(opch); }
 
@@ -92,6 +95,17 @@ namespace flashmatch {
 
     float GetVisibilityReflected(int vox_id, unsigned int opch) const;
 
+    //Semi analytical model properties
+    int GetSphericalType() const { return fspherical_type; }
+    int GetSphericalOrientation() const { return fspherical_orientation; }
+    std::vector<int> GetSphericalIds() const { return fspherical_ids; }
+    int GetRectengularType() const { return frectengular_type; }
+    int GetRectengularOrientation() const { return frectengular_orientation; }
+    double GetRectengularHeight() const { return frectengular_height; }
+    double GetRectengularWidth() const { return frectengular_width; }
+    std::vector<int> GetRectengularIds() const { return frectengular_ids; }
+    
+
     #if USING_LARSOFT == 0
     /// Photon Library data access
     const std::vector<float>& GetLibraryEntries(int vox_id) const;
@@ -108,6 +122,12 @@ namespace flashmatch {
       if(!_me) _me = new DetectorSpecs(p);
       return *_me;
     }
+    void EnableCryostats(int cryos, std::vector<double> tpcs_minx, 
+        std::vector<double> tpcs_maxx, 
+        std::vector<double> tpcs_miny,
+        std::vector<double> tpcs_maxy, 
+        std::vector<double> tpcs_minz, 
+        std::vector<double> tpcs_maxz);
     #else
     /// Photon Library data access
     phot::IPhotonLibrary::Counts_t GetLibraryEntries(int vox_id, bool reflWanted=false) const;
@@ -127,6 +147,26 @@ namespace flashmatch {
     double _light_yield;
     double _MIPdEdx;
     std::vector<int> _cryo_id_v;
+    bool use_photon_library;
+
+    // optical detector properties inherited for Semi-analytical model
+    int fspherical_type;
+    int fspherical_orientation;
+    std::vector<int> fspherical_ids;
+    int frectengular_type;
+    int frectengular_orientation;
+    double frectengular_height;
+    double frectengular_width;
+    std::vector<int> frectengular_ids;
+
+    // Geometry for setting tpc boundaries
+    std::vector<double> _tpcs_minx;
+    std::vector<double> _tpcs_maxx;
+    std::vector<double> _tpcs_miny;
+    std::vector<double> _tpcs_maxy;
+    std::vector<double> _tpcs_minz;
+    std::vector<double> _tpcs_maxz;
+    int _cryos;
   };
 
 }

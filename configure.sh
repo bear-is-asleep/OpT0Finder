@@ -8,20 +8,20 @@ else
     export FMATCH_BASEDIR=$FORCE_FMATCH_BASEDIR
 fi
 
-# # set the build dir
+# set the build dir
 unset FMATCH_BUILDDIR
 if [[ -z $FMATCH_BUILDDIR ]]; then
     export FMATCH_BUILDDIR=$FMATCH_BASEDIR/build
 fi
 
-# # Check python version compatibility:
+# Check python version compatibility:
 export FMATCH_PYTHON_CONFIG=python3-config
 FMATCH_PYVERSION=0
-export FMATCH_PYTHON=/usr/bin/python3
-if [ `command -v python3` ]; then
+export FMATCH_PYTHON=python3
+if [ `command -v python` ]; then
     FMATCH_PYVERSION=$($FMATCH_PYTHON -c "import sys; print(sys.version_info.major)")
 else
-    export FMATCH_PYTHON=`which python`
+    export FMATCH_PYTHON=`which python3`
     FMATCH_PYVERSION=$($FMATCH_PYTHON -c "import sys; print(sys.version_info.major)")
 fi
 if [[ $FMATCH_PYVERSION -gt 2 ]]

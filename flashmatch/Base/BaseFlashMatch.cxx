@@ -20,6 +20,20 @@ namespace flashmatch {
     _flash_hypothesis = alg;
   }
 
+  void BaseFlashMatch::SetTPCCryo(int tpc, int cryo) {
+    _tpc = tpc;
+    _cryo = cryo;
+
+    auto const& bbox = DetectorSpecs::GetME().ActiveVolume(_tpc, _cryo);
+    _vol_xmax = bbox.Max()[0];
+    _vol_xmin = bbox.Min()[0];
+  }
+
+  void BaseFlashMatch::InitializeMask(QCluster_t& trk) const{
+    trk.tpc_mask_v.clear();
+    trk.tpc_mask_v.resize(DetectorSpecs::GetME().NOpDets(), 0); // 1 means skip
+  }
+
 }
 
 #endif

@@ -22,6 +22,7 @@
 
 #pragma link C++ class flashmatch::PhotonLibHypothesis+;
 #pragma link C++ class flashmatch::SemiAnalyticalHypothesis+;
+#pragma link C++ class flashmatch::SemiAnalyticalModel+;
 //#pragma link C++ class flashmatch::ChargeAnalytical+;
 #pragma link C++ class flashmatch::LightPath+;
 #pragma link C++ class flashmatch::NPEFlashFilter+;

@@ -102,9 +102,9 @@ namespace flashmatch {
       if( iter == _data_value.end() ) {
         std::string msg;
         msg = "Key does not exist: \"" + key + "\"";
-	std::cout<<dump()<<std::endl;
-	std::cerr<<msg<<std::endl;
-	throw std::exception();
+        std::cout<<dump()<<std::endl;
+        std::cerr<<msg<<std::endl;
+        throw std::exception();
       }
       return parser::FromString<T>((*iter).second);
     }
