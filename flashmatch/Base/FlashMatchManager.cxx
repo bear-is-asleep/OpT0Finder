@@ -370,6 +370,14 @@ namespace flashmatch {
         std::cout<<"flash.idx = "<<flash.idx<<std::endl;
         _alg_flash_hypothesis->InitializeMask(flash);
         _alg_flash_match->Match( tpc, flash, match ); // Run matching
+        if(match.tpc_id != tpc_index_v[tpc_index]){
+          FLASH_CRITICAL() << "TPC ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
+          throw OpT0FinderException();
+        }
+        if(match.flash_id != flash_index_v[flash_index]){
+          FLASH_CRITICAL() << "Flash ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
+          throw OpT0FinderException();
+        }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
         FLASH_DEBUG() << "Match duration = " << duration.count() << "ns" << std::endl;
@@ -392,8 +400,14 @@ namespace flashmatch {
     }
 
     // We have a score-ordered list of match information at this point.
-
     result = _alg_match_select->Select(match_result);
+    std::cout<<"*********"<<std::endl;
+    std::cout<<"match_result.size() = "<<match_result.size()<<std::endl;
+    std::cout<<"match_result[0].size() = "<<match_result[0].size()<<std::endl;
+    std::cout<<"_tpc_object_v.size() = "<<_tpc_object_v.size()<<std::endl;
+    std::cout<<"_flash_v.size() = "<<_flash_v.size()<<std::endl;
+    std::cout<<"result.size() = "<<result.size()<<std::endl;
+    std::cout<<"*********"<<std::endl;
 
     for(size_t idx=0; idx < result.size(); ++idx) {
       auto const& match = result[idx];

@@ -190,7 +190,13 @@ namespace flashmatch {
     }
     else{ //one-to-many
       std::cout<<"USING ONE TO MANY"<<std::endl;
-      match = OnePMTSpectrumMatch(flash);
+      //Get the best match one-to-many
+      FlashMatch_t res = OnePMTSpectrumMatch(flash);
+      //Preserve tpc and flash id
+      res.tpc_id = match.tpc_id;
+      res.flash_id = match.flash_id;
+      //Store in the match
+      match = res;
     }
   }
 
@@ -418,6 +424,7 @@ namespace flashmatch {
       H = hypothesis.pe_v[pmt_index];  // hypothesis
       _current_pe += H;
       if( H < 0 ) throw OpT0FinderException("Cannot have hypothesis value < 0!");
+      if (std::isnan(H)) throw OpT0FinderException("Hypothesis value is nan!");
 
       if(O < _pe_observation_threshold) ++count_observation;
       if(H < _pe_hypothesis_threshold ) ++count_hypothesis;
@@ -452,7 +459,7 @@ namespace flashmatch {
       }
 
       //_current_pe += H;
-
+      //std::cout<<"H "<<H<<std::endl;
       if(_mode == kLLHD) {
       	assert(H>0);
       	double arg = TMath::Poisson(O,H) + epsilon;

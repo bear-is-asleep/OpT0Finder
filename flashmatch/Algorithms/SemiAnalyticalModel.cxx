@@ -426,7 +426,6 @@ namespace flashmatch{
     // accounting for solid angle and LAr absorbtion length
     double visibility_geo =
       std::exp(-1. * distance / fvuv_absorption_length) * (solid_angle / (4 * geoalgo::kPI));
-
     // apply Gaisser-Hillas correction for Rayleigh scattering distance
     // and angular dependence offset angle bin
     const size_t j = (theta / fdelta_angulo_vuv);
@@ -505,6 +504,19 @@ namespace flashmatch{
     double GH_correction = Gaisser_Hillas(distance, pars_ini);
 
     // determine corrected visibility of photo-detector
+    if (std::isnan(GH_correction) || std::isnan(visibility_geo) || std::isnan(cosine)) {
+        //       std::cout<<"distance: "<<distance
+        // <<" fvuv_absorption_length: "<<fvuv_absorption_length
+        // <<" solid_angle: "<<solid_angle << std::endl;
+      FLASH_WARNING()
+        << "NaN value in VUV visibility estimation"
+            "parameters. Setting visibility to 0."
+        << "\n"
+        << "GH_correction: " << GH_correction << " visibility_geo: " << visibility_geo << " cosine: "
+        << cosine << std::endl;
+        //throw OpT0FinderException();
+        return 0;
+    }
     return GH_correction * visibility_geo / cosine;
   }
 
