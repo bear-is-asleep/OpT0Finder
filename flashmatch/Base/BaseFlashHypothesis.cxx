@@ -27,6 +27,12 @@ namespace flashmatch {
       << " != number of opdet (" << DetectorSpecs::GetME().NOpDets() << ")!" << std::endl;
       throw OpT0FinderException();
     }
+
+    //Debug statements
+    for(size_t i=0; i<_channel_mask.size(); ++i) {
+      FLASH_DEBUG() << "Channel " << i << " is masked." << std::endl;
+    }
+
   }
 
   //TODO: Implement this mask for a given list of channel ids or conditions

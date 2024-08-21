@@ -171,6 +171,7 @@ namespace flashmatch {
     std::vector<double> _xpos_v, _ypos_v, _zpos_v;
     std::vector<double> _exp_frac_v, _exp_tau_v;
 
+    std::vector<int> _tpc_v; ///< TPC number to consider
     bool _many_to_many; ///< If true, allow multiple TPC objects to be matched to the same flash, else one to many
     std::vector<int> _match_mask; ///< OpDet Channel Mask for a cluster+flash pair 
 

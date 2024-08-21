@@ -45,6 +45,12 @@ namespace flashmatch{
     // Call the base class's _Configure_ method
     BaseFlashHypothesis::_Configure_(pset);
     _qe_refl_v = pset.get<std::vector<double> >("VISEfficiency",_qe_refl_v);
+    if(_qe_refl_v.empty()) _qe_refl_v.resize(DetectorSpecs::GetME().NOpDets(),1.0);
+    if(_qe_refl_v.size() != DetectorSpecs::GetME().NOpDets()) {
+      FLASH_CRITICAL() << "VIS Efficiency factor array has size " << _qe_refl_v.size()
+                       << " != number of opdet (" << DetectorSpecs::GetME().NOpDets() << ")!" << std::endl;
+      throw OpT0FinderException();
+    }
 
     fActiveVolume = DetectorSpecs::GetME().ActiveVolume();
     fanode_centre = TVector3(fActiveVolume.Min()[0], //Set to minx until we find a way to chose the tpc. The x-coord is not used.
@@ -56,9 +62,10 @@ namespace flashmatch{
     fDoReflectedLight = pset.get<bool>("DoReflectedLight",true);
     fIncludeAnodeReflections = pset.get<bool>("includeAnodeReflections",false);
     std::vector<double> _abs_length_spectrum = pset.get<std::vector<double>>("AbsLengthSpectrum");
-    // Convert the absorption length spectrum to a map
-    for (size_t i = 0; i < _abs_length_spectrum.size(); i += 2) {
-      abs_length_spectrum[_abs_length_spectrum[i]] = _abs_length_spectrum[i + 1];
+    std::vector<double> _abs_length_energy = pset.get<std::vector<double>>("AbsLengthEnergies");
+    // Create a map from absorption spectrum and energies
+    for (size_t i = 0; i < _abs_length_spectrum.size(); ++i) {
+      abs_length_spectrum[_abs_length_energy[i]] = _abs_length_spectrum[i];
     }
     fUseXeAbsorption = pset.get<bool>("useXeAbsorption",false);
     fspherical_type = DetectorSpecs::GetME().GetSphericalType();
@@ -196,7 +203,15 @@ namespace flashmatch{
 
   void SemiAnalyticalModel::FillEstimate(const QCluster_t& trk, Flash_t &flash) const
     {
-    InitializeMask(flash); // Initialize the mask
+    //Print();
+    // std::cout<<"-------------------"<<std::endl;
+    // std::cout<<"VUV params"<<std::endl;
+    // printVUVParameters();
+    // std::cout<<"-------------------"<<std::endl;
+    // std::cout<<"VIS params"<<std::endl;
+    // printVISParameters();
+    // std::cout<<"-------------------"<<std::endl;
+    //InitializeMask(flash); // Initialize the mask
     //std::cout<<"FillEstimateSemiAnalytical"<<std::endl;
     if(flash.pe_v.empty()) flash.pe_v.resize(fNOpDets);
     if(flash.pe_err_v.empty()) flash.pe_err_v.resize(fNOpDets);
@@ -209,6 +224,12 @@ namespace flashmatch{
     for (auto& v : flash.pe_v      ) {v = 0;}
     for (auto& v : flash.pe_err_v  ) {v = 0;}
     for (auto& v : flash.pe_true_v ) {v = 0;}
+
+    double q_total = 0;
+    double average_visibility = 0;
+    double average_reflected_visibility = 0;
+    int direct_cnt = 0;
+    int reflected_cnt = 0;
     for ( size_t ipt = 0; ipt < trk.size(); ++ipt) {
       ////std::cout<<"ipt: "<<ipt<<std::endl;
       /// Get the 3D point in space from where photons should be propagated
@@ -226,7 +247,7 @@ namespace flashmatch{
 
       std::vector<double> reflected_visibilities;
       detectedReflectedVisibilities(reflected_visibilities, xyz);
-
+      q_total += n_original_photons;
       //std::cout<<"after detectedReflectedVisibilities "<< ipt << std::endl;
 
       //
@@ -241,6 +262,8 @@ namespace flashmatch{
         //   continue;
         // }
         const double visibility = direct_visibilities[op_det];
+        average_visibility += visibility;
+        direct_cnt++;
 
         double q = n_original_photons * visibility * _global_qe * _qe_v[op_det];
         ////std::cout<<"direct_visibilities.size(): "<<direct_visibilities.size()<<std::endl;
@@ -264,7 +287,7 @@ namespace flashmatch{
         } else {
           flash.pe_v[op_det] = 0;
         }
-        // //std::cout << "OpDet: " << op_det << " [x,y,z] -> [q] : [" << pt.x << ", " << pt.y << ", " << pt.z << "] -> [" << q << "]" << std::endl;
+        //std::cout << "OpDet: " << op_det << " [x,y,z] -> [q] : [" << pt.x << ", " << pt.y << ", " << pt.z << "] -> [" << q << "]" << std::endl;
         ////std::cout<<"trk.tpc_mask_v.size(): "<<trk.tpc_mask_v.size()<<std::endl;
         ////std::cout<<"trk.tpc_mask_v.at(op_det): "<<trk.tpc_mask_v.at(op_det)<<std::endl;
         ////std::cout<<"flash.pe_v[op_det]: "<<flash.pe_v[op_det]<<std::endl;
@@ -286,6 +309,8 @@ namespace flashmatch{
         //   continue;
         // }
         const double visibility = reflected_visibilities[op_det];
+        average_reflected_visibility += visibility;
+        reflected_cnt++;
         ////std::cout<<"reflected_visibilities.size(): "<<reflected_visibilities.size()<<std::endl;
         ////std::cout<<"visibility: "<<visibility<<std::endl;
         //////std::cout<<"_global_qe_refl: "<<_global_qe_refl<<std::endl;
@@ -307,16 +332,26 @@ namespace flashmatch{
         //  flash.pe_v[op_det] = 0.;
       }
     }
+    std::cout<<"flash.pe_v.size(): "<<flash.pe_v.size()<<std::endl;
     for (size_t op_det=0; op_det<flash.pe_v.size(); ++op_det) {
-      ////std::cout<<"op_det: "<<op_det<<std::endl;
-      ////std::cout<<"flash.pe_v[op_det]: "<<flash.pe_v[op_det]<<std::endl;
+      std::cout<<"op_det: "<<op_det<<std::endl;
+      std::cout<<"flash.pe_v[op_det]: "<<flash.pe_v[op_det]<<std::endl;
       if (op_det > 8){
        break;
       }
     }
+    //Count number of valid channels
+    
     // Print outs to check validity of filling the flashes
-    FLASH_DEBUG() << "Filled flash with " << flash.pe_v.size() << " PMTs ... " 
+    FLASH_DEBUG() << "Filled flash with " << _channel_mask.size() << " PMTs ... " 
     << " Valid: " << flash.Valid(fNOpDets) << " Total PE: " << flash.TotalPE() 
+    << " q_total: " << q_total
+    << " Average Visibility: " << average_visibility/direct_cnt
+    << " Average Reflected Visibility: " << average_reflected_visibility/reflected_cnt
+    << " _global_qe: " << _global_qe
+    << " trk.size(): " << trk.size()
+    << " _global_qe_refl: " << _global_qe_refl
+    << "Flash [x,y,z] -> [Total PE] : [" << flash.x << ", " << flash.y << ", " << flash.z << "] -> [" << flash.TotalPE() << "]"
     << " Total True PE: "  << flash.TotalTruePE() << " idx: " << flash.idx << std::endl;
     // Check validity of flash
     if (!flash.Valid(fNOpDets)) {
@@ -505,15 +540,16 @@ namespace flashmatch{
 
     // determine corrected visibility of photo-detector
     if (std::isnan(GH_correction) || std::isnan(visibility_geo) || std::isnan(cosine)) {
-        //       std::cout<<"distance: "<<distance
-        // <<" fvuv_absorption_length: "<<fvuv_absorption_length
-        // <<" solid_angle: "<<solid_angle << std::endl;
-      FLASH_WARNING()
-        << "NaN value in VUV visibility estimation"
-            "parameters. Setting visibility to 0."
-        << "\n"
-        << "GH_correction: " << GH_correction << " visibility_geo: " << visibility_geo << " cosine: "
-        << cosine << std::endl;
+      //       std::cout<<"distance: "<<distance
+      // <<" fvuv_absorption_length: "<<fvuv_absorption_length
+      // <<" solid_angle: "<<solid_angle << std::endl;
+      // solid angle is nan sometimes
+      // FLASH_DEBUG()
+      //   << "NaN value in VUV visibility estimation"
+      //       "parameters. Setting visibility to 0."
+      //   << "\n"
+      //   << "GH_correction: " << GH_correction << " visibility_geo: " << visibility_geo << " cosine: "
+      //   << cosine << std::endl;
         //throw OpT0FinderException();
         return 0;
     }
@@ -719,7 +755,7 @@ namespace flashmatch{
       }
       else {
         FLASH_CRITICAL()
-          << "Error: Invalid optical detector shape requested or corrections "
+          << "Invalid optical detector shape requested or corrections "
               "are missing - configuration error in semi-analytical model."
           << "\n";
           throw OpT0FinderException();
@@ -972,8 +1008,12 @@ namespace flashmatch{
     std::vector<geoalgo::Point_t> opDetCenters = DetectorSpecs::GetME().PMTPositions();
     std::vector<SemiAnalyticalModel::OpticalDetector> opticalDetector;
     for (size_t ch = 0; ch < opDetCenters.size(); ch++) {
-        
       geoalgo::Point_t center(opDetCenters[ch][0], opDetCenters[ch][1], opDetCenters[ch][2]);
+      //Continue if channel is NOT in _channel_mask
+      if (std::find(_channel_mask.begin(), _channel_mask.end(), ch) == _channel_mask.end()) {
+        FLASH_DEBUG() << "SKIPPED Optical Detector " << ch << " center: " << center[0] << " " << center[1] << " " << center[2] << std::endl;
+        continue;
+      }
       assert(center.size()==3);
       // Check if it's rectangular or spherical
       if (std::find(fspherical_ids.begin(), fspherical_ids.end(), ch) != fspherical_ids.end()) {
@@ -986,56 +1026,252 @@ namespace flashmatch{
       }
       else {
         FLASH_CRITICAL() << "Unknown optical detector type for id: " << ch << std::endl;
+        throw OpT0FinderException();
       }
       FLASH_DEBUG() << "Optical Detector " << ch << " center: " << center[0] << " " << center[1] << " " << center[2] << std::endl;
       //ch++;
     }
     return opticalDetector;
   }
+  void SemiAnalyticalModel::Print() const {
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "SemiAnalyticalModel Configuration:" << std::endl;
 
-  //TODO: Modify function to be compatible with gemotry loaded
-  // std::vector<SemiAnalyticalModel::OpticalDetector> SemiAnalyticalModel::opticalDetectors() const
-  // {
-  //   std::vector<SemiAnalyticalModel::OpticalDetector> opticalDetector;
-  //   for (size_t const i : SemiAnalyticalModel::counter(fNOpDets)) {
-  //     geo::OpDetGeo const& opDet = fGeom.OpDetGeoFromOpDet(i);
-  //     geoalgo::Point_t center = opDet.GetCenter();
-  //     double height;
-  //     double length;
-  //     int type;
-  //     int orientation;
-  //     if (opDet.isSphere()) { // dome PMTs
-  //       type = 1;             // dome
-  //       orientation = 0;      // anode/cathode (default)
-  //       length = -1;
-  //       height = -1;
-  //     }
-  //     else if (opDet.isBar()) {
-  //       type = 0; // (X)Arapucas/Bars
-  //       // determine orientation to get correction OpDet dimensions
-  //       length = opDet.Length();
-  //       height = opDet.Height();
-  //       if (opDet.Width() > opDet.Length()) { // laterals along x-y plane, Z dimension smallest
-  //         orientation = 2;
-  //         length = opDet.Width();
-  //       }
-  //       else if (opDet.Width() > opDet.Height()) { // laterals along x-z plane, Y dimension smallest
-  //         orientation = 1;
-  //         height = opDet.Width();
-  //       }
-  //       else { // anode/cathode (default), X dimension smallest
-  //         orientation = 0;
-  //       }
-  //     }
-  //     else {
-  //       type = 2;        // disk PMTs
-  //       orientation = 0; // anode/cathode (default)
-  //       length = -1;
-  //       height = -1;
-  //     }
-  //     opticalDetector.emplace_back(
-  //       SemiAnalyticalModel::OpticalDetector{height, length, center, type, orientation});
-  //   }
-  //   return opticalDetector;
-  // }
+    std::cout << "Active Volume Center: (" << fActiveVolume.Center()[0] << ", "
+              << fActiveVolume.Center()[1] << ", " << fActiveVolume.Center()[2] << ")" << std::endl;
+    std::cout << "Anode Center: (" << fanode_centre[0] << ", " << fanode_centre[1] << ", " << fanode_centre[2] << ")" << std::endl;
+    std::cout << "Cathode Center: (" << fcathode_centre[0] << ", " << fcathode_centre[1] << ", " << fcathode_centre[2] << ")" << std::endl;
+
+    std::cout << "Do Reflected Light: " << std::boolalpha << fDoReflectedLight << std::endl;
+    std::cout << "Include Anode Reflections: " << fIncludeAnodeReflections << std::endl;
+    std::cout << "Use Xenon Absorption: " << fUseXeAbsorption << std::endl;
+
+    std::cout << "VUV Absorption Length: " << fvuv_absorption_length << " cm" << std::endl;
+    std::cout << "Spherical Type: " << fspherical_type << std::endl;
+    std::cout << "Spherical Orientation: " << fspherical_orientation << std::endl;
+    std::cout << "Spherical IDs: ";
+    for (auto id : fspherical_ids) std::cout << id << " ";
+    std::cout << std::endl;
+
+    std::cout << "Rectangular Type: " << frectengular_type << std::endl;
+    std::cout << "Rectangular Orientation: " << frectengular_orientation << std::endl;
+    std::cout << "Rectangular Height: " << frectengular_height << std::endl;
+    std::cout << "Rectangular Width: " << frectengular_width << std::endl;
+    std::cout << "Rectangular IDs: ";
+    for (auto id : frectengular_ids) std::cout << id << " ";
+    std::cout << std::endl;
+
+    std::cout << "Number of Optical Detectors: " << fNOpDets << std::endl;
+
+    std::cout << "Gaisser-Hillas VUV Parameters:" << std::endl;
+    if (fIsFlatPDCorr) {
+        std::cout << "  Flat Correction:" << std::endl;
+        for (const auto& vec : fGHvuvpars_flat) {
+            for (double val : vec) {
+                std::cout << "    " << val << std::endl;
+            }
+        }
+    }
+    if (fIsDomePDCorr) {
+        std::cout << "  Dome Correction:" << std::endl;
+        for (const auto& vec : fGHvuvpars_dome) {
+            for (double val : vec) {
+                std::cout << "    " << val << std::endl;
+            }
+        }
+    }
+    if (fIsFlatPDCorrLat) {
+        std::cout << "  Flat Lateral Correction:" << std::endl;
+        for (const auto& vec : fGHvuvpars_flat_lateral) {
+            for (double val : vec) {
+                std::cout << "    " << val << std::endl;
+            }
+        }
+    }
+    //Print absoprtion spectrum
+    for (auto elem : abs_length_spectrum) {
+      std::cout
+        << "Wavelength: " << elem.first << " cm, Absorption Energy: " << elem.second << " eV"
+        << std::endl;
+    }
+
+    //Print QE of optical detectors
+    std::cout << "Optical Detector Quantum Efficiencies (_qe_v): " << std::endl;
+    for (double qe : _qe_v) {
+      std::cout << qe << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Optical Detector reflected Quantum Efficiencies (_qe_refl_v): " << std::endl;
+    for (double qe : _qe_refl_v) {
+      std::cout << qe << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "End of SemiAnalyticalModel Configuration." << std::endl;
+    std::cout << "-------------------------------------------------" << std::endl;
+  }
+
+  void SemiAnalyticalModel::printVUVParameters() const {
+    std::cout << "FlatPDCorr: " << (fIsFlatPDCorr ? "true" : "false") << std::endl;
+    std::cout << "FlatPDCorrLat: " << (fIsFlatPDCorrLat ? "true" : "false") << std::endl;
+    std::cout << "DomePDCorr: " << (fIsDomePDCorr ? "true" : "false") << std::endl;
+    std::cout << "Delta Angulo VUV: " << fdelta_angulo_vuv << std::endl;
+    std::cout << "PMT Radius: " << fradius << std::endl;
+    std::cout << "ApplyFieldCageTransparency: " << (fApplyFieldCageTransparency ? "true" : "false") << std::endl;
+    std::cout << "FieldCageTransparencyLateral: " << fFieldCageTransparencyLateral << std::endl;
+    std::cout << "FieldCageTransparencyCathode: " << fFieldCageTransparencyCathode << std::endl;
+    std::cout << "VUV absorption length: " << fvuv_absorption_length << std::endl;
+    if (fIsFlatPDCorr) {
+        std::cout << "GH Parameters Flat: " << std::endl;
+        for (const auto& vec : fGHvuvpars_flat) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Border Correction Angle Flat: ";
+        for (double val : fborder_corr_angulo_flat) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Border Correction Flat: " << std::endl;
+        for (const auto& vec : fborder_corr_flat) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    if (fIsFlatPDCorrLat) {
+        std::cout << "GH Parameters Flat Lateral: " << std::endl;
+        for (const auto& vec : fGHvuvpars_flat_lateral) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Border Correction Angle Flat Lateral: ";
+        for (double val : fborder_corr_angulo_flat_lateral) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Border Correction Flat Lateral: " << std::endl;
+        for (const auto& vec : fborder_corr_flat_lateral) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    if (fIsDomePDCorr) {
+        std::cout << "GH Parameters Dome: " << std::endl;
+        for (const auto& vec : fGHvuvpars_dome) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Border Correction Angle Dome: ";
+        for (double val : fborder_corr_angulo_dome) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Border Correction Dome: " << std::endl;
+        for (const auto& vec : fborder_corr_dome) {
+            for (double val : vec) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+  }
+
+  void SemiAnalyticalModel::printVISParameters() const {
+    std::cout << "Delta Angulo VIS: " << fdelta_angulo_vis << std::endl;
+
+    if (fIsFlatPDCorr) {
+        std::cout << "VIS Distances X Flat: ";
+        for (double val : fvis_distances_x_flat) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Distances R Flat: ";
+        for (double val : fvis_distances_r_flat) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Corrections Flat: " << std::endl;
+        for (const auto& layer : fvispars_flat) {
+            for (const auto& row : layer) {
+                for (double val : row) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "------" << std::endl;
+        }
+    }
+
+    if (fIsFlatPDCorrLat) {
+        std::cout << "VIS Distances X Flat Lateral: ";
+        for (double val : fvis_distances_x_flat_lateral) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Distances R Flat Lateral: ";
+        for (double val : fvis_distances_r_flat_lateral) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Corrections Flat Lateral: " << std::endl;
+        for (const auto& layer : fvispars_flat_lateral) {
+            for (const auto& row : layer) {
+                for (double val : row) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "------" << std::endl;
+        }
+    }
+
+    if (fIsDomePDCorr) {
+        std::cout << "VIS Distances X Dome: ";
+        for (double val : fvis_distances_x_dome) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Distances R Dome: ";
+        for (double val : fvis_distances_r_dome) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "VIS Corrections Dome: " << std::endl;
+        for (const auto& layer : fvispars_dome) {
+            for (const auto& row : layer) {
+                for (double val : row) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "------" << std::endl;
+        }
+    }
+
+    std::cout << "Cathode Plane Height: " << fcathode_plane.h << std::endl;
+    std::cout << "Cathode Plane Width: " << fcathode_plane.w << std::endl;
+    std::cout << "Plane Depth: " << fplane_depth << std::endl;
+    std::cout << "Anode Reflectivity: " << fAnodeReflectivity << std::endl;
+  }
 } // namespace flashmatch

@@ -11,20 +11,20 @@ namespace flashmatch{
 namespace flashmatch{
 
   void DetectorSpecs::DumpInfo() const {
-    FLASH_NORMAL() << "Information dump..." << std::endl << std::endl 
-    << "  Active    volume : " << _bbox << std::endl << std::endl 
-    << "  PhotonLib volume : " << _photon_bbox << std::endl << std::endl 
-    << "  Drift velocity   : " << DriftVelocity() << std::endl 
-    << "  LightYield       : " << LightYield() << std::endl 
-    << "  MIP dE/dX        : " << _MIPdEdx << std::endl 
+    FLASH_NORMAL() << "Information dump..." << std::endl << std::endl
+    << "  Active    volume : " << _bbox << std::endl << std::endl
+    << "  PhotonLib volume : " << _photon_bbox << std::endl << std::endl
+    << "  Drift velocity   : " << DriftVelocity() << std::endl
+    << "  LightYield       : " << LightYield() << std::endl
+    << "  MIP dE/dX        : " << _MIPdEdx << std::endl
     << "  PMT count        : " << _pmt_v.size() << std::endl << std::endl << std::flush;
   }
 
-  void DetectorSpecs::EnableCryostats(int cryos, std::vector<double> tpcs_minx, 
-        std::vector<double> tpcs_maxx, 
+  void DetectorSpecs::EnableCryostats(int cryos, std::vector<double> tpcs_minx,
+        std::vector<double> tpcs_maxx,
         std::vector<double> tpcs_miny,
-        std::vector<double> tpcs_maxy, 
-        std::vector<double> tpcs_minz, 
+        std::vector<double> tpcs_maxy,
+        std::vector<double> tpcs_minz,
         std::vector<double> tpcs_maxz)
   {
 
@@ -49,18 +49,17 @@ namespace flashmatch{
     _bbox = geoalgo::AABox(global_x_min, global_y_min, global_z_min,
                            global_x_max, global_y_max, global_z_max);
   }
-
-
 }
 
 #if USING_LARSOFT == 0
 namespace flashmatch{
 
-  DetectorSpecs::DetectorSpecs(const Config_t& p) 
+  DetectorSpecs::DetectorSpecs(const Config_t& p)
     : LoggerFeature("DetectorSpecs")
   {
     size_t ch=0;
     _pmt_v.clear();
+    //Get PMTs from detector spec. They HAVE to be in numerical order.
     while(1) {
       std::string key = "OpDet" + std::to_string(ch);
       if(!p.contains_value(key)) break;
@@ -69,6 +68,9 @@ namespace flashmatch{
       _pmt_v.push_back(pmt);
       ch++;
     }
+
+    // PMTs are later filtered in manager from ChannelsToUse.
+    // If the vector is not set, we use all PMTs.
 
     _drift_velocity = p.get<double>("DriftVelocity");
     _light_yield = p.get<double>("LightYield");
@@ -82,7 +84,7 @@ namespace flashmatch{
       FLASH_DEBUG() <<"fspherical_orientation: "<<fspherical_orientation<<std::endl;
       fspherical_ids = p.get<std::vector<int>>("SphericalIDs");
       FLASH_DEBUG() <<"fspherical_ids.size(): "<<fspherical_ids.size()<<std::endl;
-      
+
       frectengular_type = p.get<int>("RectangularType",0);
       frectengular_orientation = p.get<int>("RectangularOrientation",0);
       frectengular_height = p.get<double>("RectangularHeight",-1.);
@@ -90,7 +92,13 @@ namespace flashmatch{
       frectengular_ids = p.get<std::vector<int>>("RectangularIDs");
       FLASH_DEBUG() <<"frectengular_ids.size(): "<<frectengular_ids.size()<<std::endl;
 
-      assert(_pmt_v.size() == fspherical_ids.size() + frectengular_ids.size());
+      if (_pmt_v.size() != fspherical_ids.size() + frectengular_ids.size()){
+        FLASH_WARNING() << "OpDet size (" << _pmt_v.size() <<") is not equal to the sum of SphericalIDs and RectangularIDs"
+        << " vectors (" << fspherical_ids.size() + frectengular_ids.size() << ").\nThis can happen when OpDet in the detector config doesn't match the IDs specified. \n"
+        << "Absolutely confirm that you are properly setting the IDs correctly in both"
+        << " the detector config and the flashmatch config."
+        << std::endl;
+      }
 
       //Set up bounding box map
       _tpcs_minx = p.get<std::vector<double> >("TPCsMinX");
@@ -114,7 +122,7 @@ namespace flashmatch{
      max_pt[1] >= min_pt[1] &&
      max_pt[2] >= min_pt[2]);
     _bbox = geoalgo::AABox(min_pt[0],min_pt[1],min_pt[2],max_pt[0],max_pt[1],max_pt[2]);
-    
+
 
     auto nopdetchannels = p.get<int>("PhotonLibraryNOpDetChannels");
     auto photon_max_pt = p.get<std::vector<double> >("PhotonLibraryVolumeMax");
@@ -184,7 +192,7 @@ namespace flashmatch{
     auto const det_prop = ::art::ServiceHandle<detinfo::DetectorPropertiesService const>()->DataForJob(clock_data);
     _drift_velocity = det_prop.DriftVelocity();
     if(_drift_velocity != p.get<double>("DriftVelocity",_drift_velocity)) {
-      FLASH_CRITICAL() << "Drift velocity is set in the config as " 
+      FLASH_CRITICAL() << "Drift velocity is set in the config as "
       << p.get<double>("DriftVelocity") << " but disagrees with larsoft " << _drift_velocity << std::endl;
       throw OpT0FinderException();
     }
@@ -213,7 +221,7 @@ namespace flashmatch{
       auto const& cryo_geo = geo->Cryostat(cryo_id);
 
       _pmt_v.reserve(_pmt_v.size()+cryo_geo.NOpDet());
-    
+
       for (size_t opdet = 0; opdet < cryo_geo.NOpDet(); opdet++) {
 
         std::vector<double> pos(3, 0.);
@@ -249,7 +257,7 @@ namespace flashmatch{
 
     _bbox = geoalgo::AABox(global_x_min, global_y_min, global_z_min,
                            global_x_max, global_y_max, global_z_max);
-    
+
     art::ServiceHandle<phot::PhotonVisibilityService const> pvs;
     auto lower_pt = this->GetVoxelDef().GetRegionLowerCorner<geo::Point_t>();
     auto upper_pt = this->GetVoxelDef().GetRegionUpperCorner<geo::Point_t>();

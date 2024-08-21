@@ -81,6 +81,11 @@ namespace flashmatch {
                                        geoalgo::Point_t const& ScintPoint,
                                        bool AnodeMode = false) const;
 
+    // print the configuration
+    void Print() const;
+    void printVUVParameters() const;
+    void printVISParameters() const;
+
     // structure for optical detector information
     struct OpticalDetector {
       double h; // height

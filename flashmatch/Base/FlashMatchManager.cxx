@@ -75,15 +75,20 @@ namespace flashmatch {
 
     // Set global configuration for semi-analytical model
     int NOpDets = DetectorSpecs::GetME().NOpDets();
-    std::vector<int> ch_mask = mgr_cfg.get<std::vector<int> >("ChannelMask",std::vector<int>());
-    if (ch_mask.size() == 0) {
+    std::vector<int> ch_touse = mgr_cfg.get<std::vector<int> >("ChannelToUse",std::vector<int>());
+    if (ch_touse.size() == 0) {
+      FLASH_DEBUG() << "ChannelMask not provided. Using all channels." << std::endl;
       //Make a list ranging from 0 to NOpDets
-      ch_mask.resize(NOpDets);
+      ch_touse.resize(NOpDets);
       for (size_t i= 0; i <NOpDets; i++) {
-        ch_mask[i] = i;
+        ch_touse[i] = i;
       }
     }
-    this->SetChannelMask(ch_mask);
+    this->SetChannelMask(ch_touse);
+    // Check masks in debug
+    // for (size_t i=0; i < ch_touse.size(); i++) {
+    //   FLASH_DEBUG() << "ChannelMask[" << i << "] = " << ch_touse[i] << std::endl;
+    // }
     std::vector<int> ch_type = mgr_cfg.get<std::vector<int> >("ChannelType",std::vector<int>()); 
     if (ch_type.size() == 0) {
       //Make a list ranging from 0 to NOpDets
@@ -236,6 +241,7 @@ namespace flashmatch {
     }
     std::cout<<"_tpc_object_v.size() = "<<_tpc_object_v.size()<<std::endl;
     std::cout<<"_flash_v.size() = "<<_flash_v.size()<<std::endl;
+    std::cout<<"_flash_v[0].pe_v.size() = "<<_flash_v[0].pe_v.size()<<std::endl;
 
     // Create also a result container
     std::vector<FlashMatch_t> result;
@@ -323,6 +329,10 @@ namespace flashmatch {
         FLASH_DEBUG() << "TPC/Flash index " << tpc_index << "/" << flash_index
           << " ID " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << std::endl;
         auto& flash = _flash_v[flash_index_v[flash_index]];    // Retrieve flash
+        if (flash.pe_v.size() != DetectorSpecs::GetME().NOpDets()){
+          FLASH_CRITICAL() << "Flash size (" << flash.pe_v.size() << ") does not match the number of OpDets (" << DetectorSpecs::GetME().NOpDets() << ")" << std::endl;
+          throw OpT0FinderException();
+        }
         //std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << std::endl;
 
         auto& match = match_result[tpc_index][flash_index];
@@ -429,16 +439,19 @@ namespace flashmatch {
 
   }
   
-  void FlashMatchManager::SetChannelMask(std::vector<int> ch_mask) {
+  void FlashMatchManager::SetChannelMask(std::vector<int> ch_touse) {
 
+    //FIXME Set in detector config as well
+
+    //Set in upstream algorithms
     if (!_alg_flash_hypothesis) {
       throw OpT0FinderException("Flash hypothesis algorithm is required to set channel mask!");
     }
 
-    _alg_flash_hypothesis->SetChannelMask(ch_mask);
+    _alg_flash_hypothesis->SetChannelMask(ch_touse);
 
       if (_alg_flash_match) {
-      _alg_flash_match->SetChannelMask(ch_mask);
+      _alg_flash_match->SetChannelMask(ch_touse);
     }
   }
 

@@ -127,6 +127,9 @@ namespace flashmatch {
     _match_mask.clear();
     _match_mask.resize(DetectorSpecs::GetME().NOpDets(), 0);
 
+    std::cout<<"flash.pe_v.size() "<<flash.pe_v.size()<<std::endl;
+    std::cout<<"flash.pds_mask_v.size() "<<flash.pds_mask_v.size()<<std::endl;
+
     for (size_t opch=0; opch < flash.pe_v.size(); opch++){
       if (flash.pds_mask_v.at(opch)!=0 || pt_v.tpc_mask_v.at(opch)!=0){
         _match_mask.at(opch) = 1;
