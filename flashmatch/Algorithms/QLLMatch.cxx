@@ -99,8 +99,6 @@ namespace flashmatch {
     // Inspect, in either assumption (original track is in tpc0 or tpc1), the track is contained in the whole active volume or not
     bool contained_tpc0 = reco_x_tpc0 >= _vol_xmin - tolerance && (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance; 
     bool contained_tpc1 = reco_x_tpc1 >= _vol_xmin - tolerance && (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance;
-    FLASH_INFO() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
-    FLASH_INFO() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
     if (contained_tpc0 && reco_x_tpc0 > _vol_xmin) {
       x0_v.push_back(std::max(reco_x_tpc0, _vol_xmin + _offset));
     }
@@ -112,9 +110,9 @@ namespace flashmatch {
   }
 
   void QLLMatch::DumpHistory() const {
-    FLASH_DEBUG() << "Dumping minimizer history..." << std::endl;
+    FLASH_INFO() << "Dumping minimizer history..." << std::endl;
     for(size_t i=0; i<_minimizer_record_x_v.size(); ++i) {
-      FLASH_DEBUG() << "Step " << i 
+      FLASH_INFO() << "Step " << i 
       << " X " << _minimizer_record_x_v[i] 
       << " PE " << _minimizer_record_pe_v[i]
       << " LLHD " << _minimizer_record_llhd_v[i] << std::endl;
@@ -130,6 +128,7 @@ namespace flashmatch {
     std::cout<<"flash.pe_v.size() "<<flash.pe_v.size()<<std::endl;
     std::cout<<"flash.pds_mask_v.size() "<<flash.pds_mask_v.size()<<std::endl;
 
+    // FIXME: Remove this since it's done in SPINE
     for (size_t opch=0; opch < flash.pe_v.size(); opch++){
       if (flash.pds_mask_v.at(opch)!=0 || pt_v.tpc_mask_v.at(opch)!=0){
         _match_mask.at(opch) = 1;
@@ -137,7 +136,7 @@ namespace flashmatch {
     }
 
     _raw_trk.tpc_mask_v = _match_mask;
-    
+    // End of removing ^^
     FLASH_DEBUG() << "Starting a match... "
     << "MC info: tpc true time " << pt_v.time_true 
     << " Flash true time " << flash.time_true << std::endl;    
@@ -162,7 +161,6 @@ namespace flashmatch {
 
       // Calculate initial x positions
       auto x0_v = this->CalculateX0(flash);
-      std::cout<<"x0_v.size() "<<x0_v.size()<<std::endl;
 
       std::vector<FlashMatch_t> res_v;
       for(auto const& x0 : x0_v) {
@@ -175,7 +173,6 @@ namespace flashmatch {
         
         res_v.emplace_back(std::move(res));
       }
-      std::cout<<"res_v.size() "<<res_v.size()<<std::endl;
 
       size_t best_res_idx = 0;
       double best_res_score = -1;
@@ -188,7 +185,6 @@ namespace flashmatch {
           best_res_score = res_v[i].score;
         }
       }
-      std::cout<<"best_res_idx "<<best_res_idx<<std::endl;
       match = res_v[best_res_idx];
     }
     else{ //one-to-many
@@ -283,7 +279,6 @@ namespace flashmatch {
 
 
   void QLLMatch::PESpectrumMatch(const Flash_t &flash, const double x0, FlashMatch_t& match) {
-    std::cout<<"PESpectrumMatch"<<std::endl;
     match.num_steps = _num_steps;
     match.minimizer_min_x = _minimizer_min_x;
     match.minimizer_max_x = _minimizer_max_x;
@@ -292,9 +287,7 @@ namespace flashmatch {
 
     _hypothesis.time_width = flash.time_width;
 
-    Flash_t _flash = flash; // TEMPORARY FOR MINUIT BUG
-    this->CallMinuit(_flash, x0);
-    std::cout<<"_qll "<<_qll<<std::endl;
+    this->CallMinuit(flash, x0);
 
     // Estimate position
     if (std::isnan(_qll)) return;
@@ -308,7 +301,6 @@ namespace flashmatch {
 
       weight += _hypothesis.pe_v[pmt_index];
     }
-    std::cout<<"weight "<<weight<<std::endl;
 
     match.tpc_point.y /= weight;
     match.tpc_point.z /= weight;
@@ -317,7 +309,6 @@ namespace flashmatch {
     match.tpc_point_err.x = _reco_x_offset_err;
 
     match.hypothesis  = _hypothesis.pe_v;
-    std::cout<<"match.hypothesis.size() "<<match.hypothesis.size()<<std::endl;
 
     //
     // Compute score
@@ -343,7 +334,6 @@ namespace flashmatch {
     if( fabs(match.tpc_point.z - z0) > _recoz_penalty_threshold )
       match.score *= 1. / (1. + fabs(match.tpc_point.z - z0) - _recoz_penalty_threshold);
     */
-    std::cout<<"match.score "<<match.score<<std::endl;
 
     return;
   }
@@ -373,7 +363,6 @@ namespace flashmatch {
     //std::cout << "Duration ChargeHypothesis 1 = " << duration.count() << "us" << std::endl;
 
     //start = high_resolution_clock::now();
-    _var_trk.idx = _raw_trk.idx; // charge cluster index
     FillEstimate(_var_trk, _hypothesis);
     _var_trk.idx = _raw_trk.idx; // charge cluster index
 
@@ -581,31 +570,6 @@ namespace flashmatch {
     // Set the measurement and hypothesis idx
     _measurement.idx = pmt.idx;
     _hypothesis.idx = pmt.idx;
-    std::cout<<"CallMinuit"<<std::endl;
-    std::cout<<"x0 "<<x0<<std::endl;
-    std::cout<<"_measurement.pe_v.size() "<<_measurement.pe_v.size()<<std::endl;
-    std::cout<<"pmt.pe_v.size() "<<pmt.pe_v.size()<<std::endl;
-
-    std::cout<<"_measurement.idx "<<_measurement.idx<<std::endl;
-    std::cout<<"_hypothesis.idx "<<_hypothesis.idx<<std::endl;
-    std::cout<<"pmt.idx "<<pmt.idx<<std::endl;
-    std::cout<<"_raw_trk.idx "<<_raw_trk.idx<<std::endl;
-    std::cout<<"_var_trk.idx "<<_var_trk.idx<<std::endl;
-
-    //Skip single event to see if it's just for one event
-    // if ( _raw_trk.idx > 0){
-    //   return 69;
-    // }
-
-    //PRint all of the points
-    for (size_t i = 0; i < _raw_trk.size(); ++i) {
-      std::cout<<"_raw_trk["<<i<<"].x "<<_raw_trk[i].x;
-      std::cout<<" _raw_trk["<<i<<"].y "<<_raw_trk[i].y;
-      std::cout<<" _raw_trk["<<i<<"].z "<<_raw_trk[i].z;
-      std::cout<<" _raw_trk["<<i<<"].q "<<_raw_trk[i].q<<std::endl;
-    }
-
-    std::cout<<"DetectorSpecs::GetME().NOpDets(): "<<DetectorSpecs::GetME().NOpDets()<<std::endl;
 
     if (_measurement.pe_v.empty()) {
       _measurement.pe_v.resize(DetectorSpecs::GetME().NOpDets(), 0.);
@@ -622,7 +586,6 @@ namespace flashmatch {
     if (!_penalty_value_v.empty() && _penalty_value_v.size() != pmt.pe_v.size()) {
       throw OpT0FinderException("Penalty value array has a different size than PMT array size!");
     }
-    std::cout<<"_measurement.pe_v.size() "<<_measurement.pe_v.size()<<std::endl;
 
     _converged = false;
 
@@ -662,8 +625,6 @@ namespace flashmatch {
      << " (x buffer set at " << _minuit_x_buffer << ")"
 		 << " ... initial state x=" <<reco_x <<" x_err=" << reco_x_err << std::endl;
 
-    std::cout<<"reco_x "<<reco_x<<std::endl;
-
     if (!_minuit_ptr) _minuit_ptr = new TMinuit(4);
     double MinFval;
     int ierrflag, npari, nparx, istat;
@@ -672,18 +633,14 @@ namespace flashmatch {
 
     assert(this == QLLMatch::GetME());
 
-    _minuit_ptr->SetPrintLevel(0);
     arglist[0] = 2.0;  // set strategy level
     _minuit_ptr->mnexcm("SET STR", arglist, 1, ierrflag);
-    std::cout<<"reco_x 68"<<reco_x<<std::endl;
 
     _minuit_ptr->SetFCN(MIN_vtx_qll);
 
     _minuit_ptr->DefineParameter(0, "X", reco_x, reco_x_err, xmin, xmax);
 
     _minuit_ptr->Command("SET NOW");
-
-    std::cout<<"after set now"<<std::endl;
 
     // use Migrad minimizer
 
@@ -705,7 +662,6 @@ namespace flashmatch {
     //_minuit_ptr->mnexcm ("simplex",arglist,2,ierrflag);
     FLASH_INFO() << " reco x before " << reco_x << std::endl;
     _minuit_ptr->GetParameter(0, reco_x, reco_x_err);
-    std::cout<<"reco_x 1 "<<reco_x<<std::endl;
     FLASH_INFO() << " reco x after " << reco_x << std::endl;
 
     _minuit_ptr->mnstat(Fmin, Fedm, Errdef, npari, nparx, istat);
@@ -724,8 +680,6 @@ namespace flashmatch {
     double fValue[1];
     fValue[0] = reco_x;
 
-    std::cout<<"reco_x 2 "<<reco_x<<std::endl;
-
     // Transfer the minimization variables:
     MIN_vtx_qll(nPar, grad, Fmin, fValue, ierrflag);
     MinFval = Fmin;
@@ -738,7 +692,6 @@ namespace flashmatch {
 
     if (_minuit_ptr) delete _minuit_ptr;
     _minuit_ptr = 0;
-    std::cout<<"_qll "<<_qll<<std::endl;
     return _qll;
   }
 

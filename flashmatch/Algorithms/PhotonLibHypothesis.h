@@ -52,6 +52,14 @@ namespace flashmatch {
 
     void BuildHypothesis(const QCluster_t& trk, Flash_t &flash) const;
 
+    int InspectTouchingEdges(const QCluster_t&) const;
+
+    QCluster_t TrackExtension(const QCluster_t&, const int touch) const;
+
+    QCluster_t ComputeExtension(const geoalgo::Vector& A, const geoalgo::Vector& B) const;
+
+    void TrackExtension(const QCluster_t&, Flash_t&) const;
+
   protected:
 
     void _Configure_(const Config_t &pset);

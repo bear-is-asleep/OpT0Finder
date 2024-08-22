@@ -93,11 +93,15 @@ namespace flashmatch{
       FLASH_DEBUG() <<"frectengular_ids.size(): "<<frectengular_ids.size()<<std::endl;
 
       if (_pmt_v.size() != fspherical_ids.size() + frectengular_ids.size()){
-        FLASH_WARNING() << "OpDet size (" << _pmt_v.size() <<") is not equal to the sum of SphericalIDs and RectangularIDs"
-        << " vectors (" << fspherical_ids.size() + frectengular_ids.size() << ").\nThis can happen when OpDet in the detector config doesn't match the IDs specified. \n"
-        << "Absolutely confirm that you are properly setting the IDs correctly in both"
-        << " the detector config and the flashmatch config."
-        << std::endl;
+        FLASH_CRITICAL() << "OpDet size (" << _pmt_v.size() <<") is not equal to the sum of SphericalIDs and RectangularIDs"
+        << " vectors (" << fspherical_ids.size() + frectengular_ids.size() << ").\nThis can happen when OpDet in the detector" 
+        << " config doesn't match the IDs specified." <<std::endl;
+        throw OpT0FinderException();
+        // FLASH_WARNING() << "OpDet size (" << _pmt_v.size() <<") is not equal to the sum of SphericalIDs and RectangularIDs"
+        // << " vectors (" << fspherical_ids.size() + frectengular_ids.size() << ").\nThis can happen when OpDet in the detector config doesn't match the IDs specified. \n"
+        // << "Absolutely confirm that you are properly setting the IDs correctly in both"
+        // << " the detector config and the flashmatch config."
+        // << std::endl;
       }
 
       //Set up bounding box map

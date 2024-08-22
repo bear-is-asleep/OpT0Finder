@@ -93,6 +93,6 @@ fi
 
 echo
 echo "Finish configuration. To build, type:"
-echo "> make "
+echo "> make -j"
 echo
 

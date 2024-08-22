@@ -35,14 +35,6 @@ namespace flashmatch {
     // _Configure_
     void _Configure_(const Config_t &pset);
 
-    int InspectTouchingEdges(const QCluster_t&) const;
-
-    QCluster_t TrackExtension(const QCluster_t&, const int touch) const;
-
-    QCluster_t ComputeExtension(const geoalgo::Vector& A, const geoalgo::Vector& B) const;
-
-    void TrackExtension(const QCluster_t&, Flash_t&) const;
-
     /// Method to create flashmatch::Flash_t object and return
     Flash_t GetEstimate(const QCluster_t&) const;
 
