@@ -73,6 +73,12 @@ namespace flashmatch {
     /// Detector active volume given cryo and tpc
     const geoalgo::AABox& ActiveVolume(int tpc, int cryo=0) const;
 
+    /// # of cryostats
+    inline size_t NCryos() const { return _cryo_id_v.size(); }
+
+    /// # of TPCs
+    inline size_t NTPCs() const { return _tpcs_minx.size(); }
+
     /// # of PMTs
     inline size_t NOpDets() const { return _pmt_v.size(); }
 

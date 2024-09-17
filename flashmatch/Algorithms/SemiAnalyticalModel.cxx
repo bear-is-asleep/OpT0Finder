@@ -40,10 +40,10 @@ namespace flashmatch{
     }
   // constructor
   void SemiAnalyticalModel::_Configure_(const Config_t& pset)
-    // Load detector info from geomtry pset
   {
     // Call the base class's _Configure_ method
     BaseFlashHypothesis::_Configure_(pset);
+    //Geometry specs
     _qe_refl_v = pset.get<std::vector<double> >("VISEfficiency",_qe_refl_v);
     if(_qe_refl_v.empty()) _qe_refl_v.resize(DetectorSpecs::GetME().NOpDets(),1.0);
     if(_qe_refl_v.size() != DetectorSpecs::GetME().NOpDets()) {
@@ -52,6 +52,7 @@ namespace flashmatch{
       throw OpT0FinderException();
     }
 
+    fNTPC = DetectorSpecs::GetME().NTPCs();
     fActiveVolume = DetectorSpecs::GetME().ActiveVolume();
     fanode_centre = TVector3(fActiveVolume.Min()[0], //Set to minx until we find a way to chose the tpc. The x-coord is not used.
                     fActiveVolume.Center()[1],
@@ -249,6 +250,17 @@ namespace flashmatch{
       detectedReflectedVisibilities(reflected_visibilities, xyz);
       q_total += n_original_photons;
       //std::cout<<"after detectedReflectedVisibilities "<< ipt << std::endl;
+      if (ipt < 3){
+        for (size_t op_det=0; op_det<direct_visibilities.size(); ++op_det) {
+          if (op_det > 40){
+            break;
+          }
+          std::cout<<"[x,y,z]: "<<pt.x<<", "<<pt.y<<", "<<pt.z<<std::endl;
+          std::cout<<"op_det: "<<op_det<<std::endl;
+          std::cout<<"direct_visibilities[op_det]: "<<direct_visibilities[op_det]<<std::endl;
+          std::cout<<"reflected_visibilities[op_det]: "<<reflected_visibilities[op_det]<<std::endl;
+        }
+      }
 
       //
       // Fill Estimate with Direct light
@@ -336,7 +348,7 @@ namespace flashmatch{
     for (size_t op_det=0; op_det<flash.pe_v.size(); ++op_det) {
       std::cout<<"op_det: "<<op_det<<std::endl;
       std::cout<<"flash.pe_v[op_det]: "<<flash.pe_v[op_det]<<std::endl;
-      if (op_det > 8){
+      if (op_det > 20){
        break;
       }
     }
@@ -996,6 +1008,11 @@ namespace flashmatch{
     // will need to be replaced to work in full DUNE geometry, ICARUS geometry
     // check x coordinate has same sign or is close to zero, otherwise return
     // false
+    // std::cout<<"ScintPoint[0]: "<<ScintPoint[0]
+    // <<", OpDetPoint[0]: "<<OpDetPoint[0]
+    // <<", fNTPC: "<<fNTPC
+    // <<std::endl;
+
     if (((ScintPoint[0] < 0.) != (OpDetPoint[0] < 0.)) && std::abs(OpDetPoint[0]) > 10. &&
         fNTPC == 2) { // TODO: replace with geometry service
       return false;
