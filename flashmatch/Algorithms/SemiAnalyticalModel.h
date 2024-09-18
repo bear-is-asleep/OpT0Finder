@@ -11,6 +11,7 @@
 //  - full description of model: Eur. Phys. J. C 81, 349 (2021)
 
 // Nov 2021 by P. Green
+// Sep 2024 adapted for OpT0Finder by B. Carlson bcarlson1@ufl.edu
 
 #include "TVector3.h"
 
@@ -32,9 +33,7 @@
 #include "flashmatch/GeoAlgo/GeoAABox.h"
 #include "flashmatch/GeoAlgo/GeoAlgoConstants.h"
 //Config
-//#include "flashmatch/Base/FMWKTools/ConfigManager.h"
 #include "flashmatch/Base/FMWKInterface.h"
-//#include "flashmatch/Base/FMWKTools/PSetUtils.h"
 #include "flashmatch/Base/OpT0FinderException.h"
 #include "flashmatch/Base/BaseFlashHypothesis.h"
 #include "flashmatch/Base/FlashHypothesisFactory.h"
@@ -54,11 +53,6 @@ namespace flashmatch {
 }
 #endif
 
-
-
-// Define a new policy *not* internally promoting RealType to double:
-// typedef boost::math::policies::policy<boost::math::policies::promote_double<false>>
-//  noLDoublePromote;
 
 namespace flashmatch {
   class SemiAnalyticalModel : public BaseFlashHypothesis {
@@ -136,8 +130,6 @@ namespace flashmatch {
     std::vector<OpticalDetector> opticalDetectors() const;
 
     // geometry properties
-    //geo::GeometryCore const& fGeom;
-    //const larg4::ISTPC fISTPC;
     int fNTPC;
     geoalgo::AABox fActiveVolume;
     TVector3 fcathode_centre, fanode_centre;
@@ -208,8 +200,6 @@ namespace flashmatch {
     std::map<double, double> abs_length_spectrum;
 
     std::vector<double> _qe_refl_v;
-
-    //std::unique_ptr<flashmatch::SemiAnalyticalModel> _semi_model; ///< The semi-analytical model
   };
 
   /**

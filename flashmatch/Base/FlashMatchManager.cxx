@@ -85,10 +85,8 @@ namespace flashmatch {
       }
     }
     this->SetChannelMask(ch_touse);
-    // Check masks in debug
-    // for (size_t i=0; i < ch_touse.size(); i++) {
-    //   FLASH_DEBUG() << "ChannelMask[" << i << "] = " << ch_touse[i] << std::endl;
-    // }
+
+    // Set channel type
     std::vector<int> ch_type = mgr_cfg.get<std::vector<int> >("ChannelType",std::vector<int>()); 
     if (ch_type.size() == 0) {
       //Make a list ranging from 0 to NOpDets
@@ -98,6 +96,8 @@ namespace flashmatch {
       }
     }
     this->SetChannelType(ch_type);
+
+    // Set uncoated PMTs
     std::vector<int> ch_uncoated = mgr_cfg.get<std::vector<int> >("UncoatedPMTs",std::vector<int>());
     if (ch_uncoated.size() == 0) {
       //Make a list ranging from 0 to NOpDets
@@ -239,9 +239,6 @@ namespace flashmatch {
       _res_tpc_flash_v.resize(_tpc_object_v.size(),std::vector<flashmatch::FlashMatch_t>(_flash_v.size()));
       _res_flash_tpc_v.resize(_flash_v.size(),std::vector<flashmatch::FlashMatch_t>(_tpc_object_v.size()));
     }
-    std::cout<<"_tpc_object_v.size() = "<<_tpc_object_v.size()<<std::endl;
-    std::cout<<"_flash_v.size() = "<<_flash_v.size()<<std::endl;
-    std::cout<<"_flash_v[0].pe_v.size() = "<<_flash_v[0].pe_v.size()<<std::endl;
 
     // Create also a result container
     std::vector<FlashMatch_t> result;
@@ -309,10 +306,8 @@ namespace flashmatch {
     // use multi-map for possible equally-scored matches
     std::vector<std::vector<FlashMatch_t> > match_result;
     match_result.resize(tpc_index_v.size());
-    std::cout<<"match_result.size() = "<<match_result.size()<<std::endl;
     for(auto& match_v : match_result) {
       match_v.resize(flash_index_v.size());
-      std::cout<<"match_v.size() = "<<match_v.size()<<std::endl;
     }
     
     // Double loop over a list of tpc object & flash
@@ -333,13 +328,10 @@ namespace flashmatch {
           FLASH_CRITICAL() << "Flash size (" << flash.pe_v.size() << ") does not match the number of OpDets (" << DetectorSpecs::GetME().NOpDets() << ")" << std::endl;
           throw OpT0FinderException();
         }
-        //std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << std::endl;
 
         auto& match = match_result[tpc_index][flash_index];
         match.tpc_id = tpc_index_v[tpc_index];
         match.flash_id = flash_index_v[flash_index];
-
-        //std::cout << "Matching TPC " << tpc_index_v[tpc_index] << " with Flash " << flash_index_v[flash_index] << std::endl;
 
         if (tpc.size() == 0 )
           continue;
@@ -350,12 +342,9 @@ namespace flashmatch {
             continue;
         }
 
-        //std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << " passed MatchProhibit" << std::endl;
-
         // run touch match algorithm
         if (_alg_touch_match)
           _alg_touch_match->Match(tpc,flash,match);
-        //std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << " passed TouchMatch" << std::endl;
 
         if(match.tpc_id != tpc_index_v[tpc_index]){
           FLASH_CRITICAL() << "TPC ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
@@ -365,19 +354,7 @@ namespace flashmatch {
           FLASH_CRITICAL() << "Flash ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
           throw OpT0FinderException();
         }
-        // std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << " passed FlashMatch" << std::endl;
-        // std::cout << "match " << match.tpc_id << " " << match.flash_id << "score: " << match.score << std::endl; 
-        // std::cout << "tpc " << tpc.min_x_true << " " << tpc.time_true << " " << tpc.sum() << std::endl;
-        // std::cout << "flash " << flash.time_true << " " << flash.TotalTruePE() << " " << flash.max_pe() << std::endl;
-        // FLASH_INFO() << "Starting a match... "
-        // << "MC info: tpc true time " << tpc.time_true 
-        // << " Flash true time " << flash.time_true << std::endl; 
         auto start = std::chrono::high_resolution_clock::now();
-        //std::cout << "_alg_flash_match->AlgorithmName() = " << _alg_flash_match->AlgorithmName() << std::endl;
-        //std::cout << "TPC/Flash " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << " passed _alg_flash_match check" << std::endl;
-        //_alg_flash_match->Match(tpc, flash, match); // Run matching
-        std::cout<<"tpc.idx = "<<tpc.idx<<std::endl;
-        std::cout<<"flash.idx = "<<flash.idx<<std::endl;
         _alg_flash_hypothesis->InitializeMask(flash);
         _alg_flash_match->Match( tpc, flash, match ); // Run matching
         if(match.tpc_id != tpc_index_v[tpc_index]){
@@ -411,19 +388,13 @@ namespace flashmatch {
 
     // We have a score-ordered list of match information at this point.
     result = _alg_match_select->Select(match_result);
-    std::cout<<"*********"<<std::endl;
-    std::cout<<"match_result.size() = "<<match_result.size()<<std::endl;
-    std::cout<<"match_result[0].size() = "<<match_result[0].size()<<std::endl;
-    std::cout<<"_tpc_object_v.size() = "<<_tpc_object_v.size()<<std::endl;
-    std::cout<<"_flash_v.size() = "<<_flash_v.size()<<std::endl;
-    std::cout<<"result.size() = "<<result.size()<<std::endl;
-    std::cout<<"*********"<<std::endl;
 
     for(size_t idx=0; idx < result.size(); ++idx) {
       auto const& match = result[idx];
       auto const& tpc   = _tpc_object_v[match.tpc_id];
       auto const& flash = _flash_v[match.flash_id];
 
+      // Commented out lines return errors
       FLASH_DEBUG() << "Match " << idx << " ... TPC " << match.tpc_id << " with PMT " << match.flash_id << std::endl
       << "  Match score       : " << match.score << " touch? " << match.touch_match << " (" << match.touch_score << ")" << std::endl 
       << "  X position        : true " << tpc.min_x_true << " hypo " << match.tpc_point.x << " touch " << match.touch_point.x << std::endl
@@ -481,6 +452,11 @@ namespace flashmatch {
     }
   }
 
+  // There's no chance this implementation will work with LArSoft
+  // Buutttt... it's a start to getting the two linked
+  // SBND's implementation is hopelessly tied to LArSoft and
+  // will be extremely difficult to separate
+  // left as an exercise to the reader
   #if USING_LARSOFT == 1
   void FlashMatchManager::SetSemiAnalyticalModel(std::unique_ptr<phot::SemiAnalyticalModel> model) {
     if (_alg_flash_hypothesis) {

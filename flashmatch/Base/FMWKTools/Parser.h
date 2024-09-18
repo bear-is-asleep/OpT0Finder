@@ -65,10 +65,6 @@ namespace flashmatch {
     /// Parse flashmatch::PSet configuration file content
     template<> std::vector< bool           > FromString< std::vector< bool           > > (const std::string& value );
     /// Parse flashmatch::PSet configuration file content
-    //template<> std::vector< std::vector< std::string    > > FromString< std::vector< std::vector< std::string    > > > (const std::string& value );
-    /// Parse flashmatch::PSet configuration file content
-    //template<> std::vector< std::vector< float          > > FromString< std::vector< std::vector< float          > > > (const std::string& value );
-    /// Parse flashmatch::PSet configuration file content
     template<> std::vector< std::vector< double         > > FromString< std::vector< std::vector< double         > > > (const std::string& value );
     /// Parse flashmatch::PSet configuration file content
     template<> std::vector<std::vector<std::vector<double>>> FromString<std::vector<std::vector<std::vector<double>>>>(const std::string& value);

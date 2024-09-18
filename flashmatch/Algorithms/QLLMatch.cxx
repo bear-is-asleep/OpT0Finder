@@ -40,7 +40,6 @@ namespace flashmatch {
 
     //Below is used in semi-analytical method
     _many_to_many             = pset.get<bool>("UseManyToMany", true);
-    std::cout<<"_many_to_many "<<_many_to_many<<std::endl;
     _saturated_thresh = pset.get<double>("SaturatedThreshold");
     _nonlinear_thresh = pset.get<double>("NonLinearThreshold");
     _nonlinear_slope  = pset.get<double>("NonLinearSlope");
@@ -79,8 +78,7 @@ namespace flashmatch {
 
   std::vector<double> QLLMatch::CalculateX0(const Flash_t &pmt) {
     // scenarios include: vol_min, using flash time + tpc0 assumption, using flash time + tpc1 assumption
-   std::cout<<"CalculateX0"<<std::endl;
-   FLASH_INFO() << "Setting initial X positions. Volume min " << _vol_xmin << " Flash time " << pmt.time << std::endl;
+    FLASH_INFO() << "Setting initial X positions. Volume min " << _vol_xmin << " Flash time " << pmt.time << std::endl;
     std::vector<double> x0_v;
 
     // default: include the vol minimum
@@ -99,6 +97,8 @@ namespace flashmatch {
     // Inspect, in either assumption (original track is in tpc0 or tpc1), the track is contained in the whole active volume or not
     bool contained_tpc0 = reco_x_tpc0 >= _vol_xmin - tolerance && (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance; 
     bool contained_tpc1 = reco_x_tpc1 >= _vol_xmin - tolerance && (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance;
+    FLASH_DEBUG() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
+    FLASH_DEBUG() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
     if (contained_tpc0 && reco_x_tpc0 > _vol_xmin) {
       x0_v.push_back(std::max(reco_x_tpc0, _vol_xmin + _offset));
     }
@@ -120,13 +120,9 @@ namespace flashmatch {
   }
 
   void QLLMatch::Match(const QCluster_t &pt_v, const Flash_t &flash, FlashMatch_t& match) {
-    std::cout<<"Match"<<std::endl;
     // combine cluster + flash mask for this match pair 
     _match_mask.clear();
     _match_mask.resize(DetectorSpecs::GetME().NOpDets(), 0);
-
-    std::cout<<"flash.pe_v.size() "<<flash.pe_v.size()<<std::endl;
-    std::cout<<"flash.pds_mask_v.size() "<<flash.pds_mask_v.size()<<std::endl;
 
     // FIXME: Remove this since it's done in SPINE
     for (size_t opch=0; opch < flash.pe_v.size(); opch++){
@@ -146,8 +142,6 @@ namespace flashmatch {
     _raw_trk.idx = pt_v.idx; // charge cluster index
     _var_trk.idx = pt_v.idx; // charge cluster index
     _raw_trk.resize(pt_v.size());
-    std::cout<<"pt_v.size() "<<pt_v.size()<<std::endl;
-    std::cout<<"_raw_trk.size() "<<_raw_trk.size()<<std::endl;
     double min_x =  1e20;
     double max_x = -1e20;
     for (size_t i = 0; i < pt_v.size(); ++i) {
@@ -188,7 +182,6 @@ namespace flashmatch {
       match = res_v[best_res_idx];
     }
     else{ //one-to-many
-      std::cout<<"USING ONE TO MANY"<<std::endl;
       //Get the best match one-to-many
       FlashMatch_t res = OnePMTSpectrumMatch(flash);
       //Preserve tpc and flash id
@@ -209,13 +202,8 @@ namespace flashmatch {
     Flash_t one_hypothesis;
     one_hypothesis.pe_v.resize(DetectorSpecs::GetME().NOpDets(), 0.);
     for (auto &v : one_hypothesis.pe_v) v = 0;
-
-    std::cout<<"one_hypothesis.pe_v.size() part 0 "<<one_hypothesis.pe_v.size()<<std::endl;
     
     FillEstimate(_raw_trk,one_hypothesis);
-
-    std::cout<<"one_hypothesis.pe_v.size() "<<one_hypothesis.pe_v.size()<<std::endl;
-    std::cout<<"_match_mask.size() "<<_match_mask.size()<<std::endl;
 
     // initialize the measurement flash 
     auto    one_measurement = flash;
@@ -226,8 +214,6 @@ namespace flashmatch {
           one_measurement.pe_v[ich] = 0.;
       }
     }
-
-    std::cout<<"one_measurement.pe_v.size() "<<one_measurement.pe_v.size()<<std::endl;
 
     // ** temp saturated opdets+nonlinear fix ** 
     // - when the measured flash PE is equal to 0 and the hypothesis is large, assume that the 
@@ -249,8 +235,6 @@ namespace flashmatch {
     }
     // ** end saturated + nonlinear fix ** 
 
-    std::cout<<"one_hypothesis.pe_v.size() "<<one_hypothesis.pe_v.size()<<std::endl;
-
     res.hypothesis = one_hypothesis.pe_v;
     
     if (_normalize){
@@ -265,8 +249,6 @@ namespace flashmatch {
     if (std::isnan(_qll) || std::isinf(_qll)) {
       return res;
     }
-
-    std::cout<<"_qll "<<_qll<<std::endl;
 
     // use the qll score 
     if(_mode == kSimpleLLHD)
@@ -380,10 +362,6 @@ namespace flashmatch {
     //end = high_resolution_clock::now();
     //duration = duration_cast<microseconds>(end - start);
     //std::cout << "Duration ChargeHypothesis 3 = " << duration.count() << "us" << std::endl;
-    // for (size_t i = 0; i < _hypothesis.pe_v.size(); ++i) {
-    //   std::cout<<"PMT "<<i<<" PE "<<_hypothesis.pe_v[i]<<std::endl;
-    //   break;
-    // }
     return _hypothesis;
   }
 
@@ -451,7 +429,6 @@ namespace flashmatch {
       }
 
       //_current_pe += H;
-      //std::cout<<"H "<<H<<std::endl;
       if(_mode == kLLHD) {
       	assert(H>0);
       	double arg = TMath::Poisson(O,H) + epsilon;
@@ -633,6 +610,7 @@ namespace flashmatch {
 
     assert(this == QLLMatch::GetME());
 
+    _minuit_ptr->SetPrintLevel(-1);
     arglist[0] = 2.0;  // set strategy level
     _minuit_ptr->mnexcm("SET STR", arglist, 1, ierrflag);
 
@@ -646,14 +624,7 @@ namespace flashmatch {
 
     arglist[0] = 5000;  // maxcalls
     arglist[1] = _migrad_tolerance; // tolerance*1e-3 = convergence condition
-    // try {
-    //   _minuit_ptr->mnexcm("MIGRAD", arglist, 2, ierrflag);
-    // } catch (...) {
-    //   std::cerr << "MIGRAD failed" << std::endl;
-    // }
     _minuit_ptr->mnexcm("MIGRAD", arglist, 2, ierrflag);
-
-    std::cout<<"reco_x 69"<<reco_x<<std::endl;
 
     _converged = true;
 
@@ -665,7 +636,6 @@ namespace flashmatch {
     FLASH_INFO() << " reco x after " << reco_x << std::endl;
 
     _minuit_ptr->mnstat(Fmin, Fedm, Errdef, npari, nparx, istat);
-    std::cout<<"Fmin "<<Fmin<<std::endl;
 
     // use this for debugging, maybe uncomment the actual minimzing function (MIGRAD / simplex calls)
     // scanning the parameter set

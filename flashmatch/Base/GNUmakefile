@@ -20,7 +20,6 @@ HOST            = $(shell uname -n)
 OSNAMEMODE      = $(OSNAME)
 
 include $(FMATCH_BASEDIR)/Makefile/Makefile.${OSNAME}
-#INCLUDE_DIRS += $(FMATCH_BASEDIR)/flashmatch/Algorithms # for semi-analytical model
 
 # call the common GNUmakefile
 include $(FMATCH_BASEDIR)/Makefile/GNUmakefile.CORE

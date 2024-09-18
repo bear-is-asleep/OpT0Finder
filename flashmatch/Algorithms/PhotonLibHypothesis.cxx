@@ -140,11 +140,8 @@ namespace flashmatch {
 
     void PhotonLibHypothesis::BuildHypothesis(const QCluster_t& trk, Flash_t &flash) const
     {
-        //bool speak=false;
-        //std::cout<<trk[0].x<<" "<<trk[0].y<<" "<<trk[0].z<<std::endl;
-        //if(std::fabs(trk[0].x + 211.635)<1.0) speak=true;
         size_t n_pmt = DetectorSpecs::GetME().NOpDets();
-	#if USING_LARSOFT == 0
+	    #if USING_LARSOFT == 0
         #pragma omp parallel
         #endif
         {

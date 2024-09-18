@@ -36,8 +36,6 @@ namespace flashmatch {
     // Step 1.1 register matches with a touch-match score
     for(auto const& match_v : match_data) {
       for(auto const& match : match_v) {
-        std::cout<<"SelectionGreedy::Select() => match.touch_match = "<<match.touch_match<<std::endl;
-        std::cout<<"SelectionGreedy::Select() => match.touch_score = "<<match.touch_score<<std::endl;
         if(match.touch_match == flashmatch::kNoTouchMatch) continue;
         if(std::fabs(match.touch_score) > _score_max_threshold) continue;
         score_map.insert(std::make_pair(std::fabs(match.touch_score),match));
@@ -71,14 +69,12 @@ namespace flashmatch {
       // std::move matched info from the map to result vector
       result.push_back( match_info );
     }
-    std::cout<<"SelectionGreedy::Select() => Selected " << result.size() << " matches. (touch match - not used)"<<std::endl;
 
     score_map.clear();
 
     // Step 2.1 register matches with a flash-match score (inverse in order to use multimap)
     for(auto const& match_v : match_data) {
       for(auto const& match : match_v) {
-        std::cout<<"SelectionGreedy::Select() => match.score = "<<match.score<<std::endl;
         if(match.score < _score_min_threshold) continue;
         double score = std::min(match.score, _score_max_ceiling);
         score_map.insert(std::make_pair(1./(score - _score_min_threshold) ,match));
@@ -110,12 +106,6 @@ namespace flashmatch {
 
       // std::move matched info from the map to result vector
       result.push_back( match_info );
-    }
-    std::cout<<"SelectionGreedy::Select() => Selected " << result.size() << " matches."<<std::endl;
-    for (auto const& match : result) {
-      std::cout<<"SelectionGreedy::Select() => match.tpc_id = "<<match.tpc_id<<std::endl;
-      std::cout<<"SelectionGreedy::Select() => match.flash_id = "<<match.flash_id<<std::endl;
-      std::cout<<"SelectionGreedy::Select() => match.score = "<<match.score<<std::endl;
     }
     return result;
   }
