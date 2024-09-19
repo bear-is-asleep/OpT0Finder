@@ -174,10 +174,9 @@ namespace flashmatch{
     FLASH_INFO() << "Semi-analytical model initialized." << std::endl;
 
     //Debug statements for semi-analytical model
-    //These are set at the debug level to avoid spamming the output
-    Print();
-    printVISParameters();
-    printVUVParameters();
+    //Print();
+    //printVISParameters();
+    //printVUVParameters();
   }
 
   void SemiAnalyticalModel::FillEstimate(const QCluster_t& trk, Flash_t &flash) const
@@ -904,244 +903,244 @@ namespace flashmatch{
     return opticalDetector;
   }
   void SemiAnalyticalModel::Print() const {
-    FLASH_DEBUG() << "-------------------------------------------------" << std::endl;
-    FLASH_DEBUG() << "SemiAnalyticalModel Configuration:" << std::endl;
+    std::cout << "-------------------------------------------------" << std::endl;
+    std::cout << "SemiAnalyticalModel Configuration:" << std::endl;
 
-    FLASH_DEBUG() << "Active Volume Center: (" << fActiveVolume.Center()[0] << ", "
+    std::cout << "Active Volume Center: (" << fActiveVolume.Center()[0] << ", "
               << fActiveVolume.Center()[1] << ", " << fActiveVolume.Center()[2] << ")" << std::endl;
-    FLASH_DEBUG() << "Anode Center: (" << fanode_centre[0] << ", " << fanode_centre[1] << ", " << fanode_centre[2] << ")" << std::endl;
-    FLASH_DEBUG() << "Cathode Center: (" << fcathode_centre[0] << ", " << fcathode_centre[1] << ", " << fcathode_centre[2] << ")" << std::endl;
+    std::cout << "Anode Center: (" << fanode_centre[0] << ", " << fanode_centre[1] << ", " << fanode_centre[2] << ")" << std::endl;
+    std::cout << "Cathode Center: (" << fcathode_centre[0] << ", " << fcathode_centre[1] << ", " << fcathode_centre[2] << ")" << std::endl;
 
-    FLASH_DEBUG() << "Do Reflected Light: " << std::boolalpha << fDoReflectedLight << std::endl;
-    FLASH_DEBUG() << "Include Anode Reflections: " << fIncludeAnodeReflections << std::endl;
-    FLASH_DEBUG() << "Use Xenon Absorption: " << fUseXeAbsorption << std::endl;
+    std::cout << "Do Reflected Light: " << std::boolalpha << fDoReflectedLight << std::endl;
+    std::cout << "Include Anode Reflections: " << fIncludeAnodeReflections << std::endl;
+    std::cout << "Use Xenon Absorption: " << fUseXeAbsorption << std::endl;
 
-    FLASH_DEBUG() << "VUV Absorption Length: " << fvuv_absorption_length << " cm" << std::endl;
-    FLASH_DEBUG() << "Spherical Type: " << fspherical_type << std::endl;
-    FLASH_DEBUG() << "Spherical Orientation: " << fspherical_orientation << std::endl;
-    FLASH_DEBUG() << "Spherical IDs: ";
-    for (auto id : fspherical_ids) FLASH_DEBUG() << id << " ";
-    FLASH_DEBUG() << std::endl;
+    std::cout << "VUV Absorption Length: " << fvuv_absorption_length << " cm" << std::endl;
+    std::cout << "Spherical Type: " << fspherical_type << std::endl;
+    std::cout << "Spherical Orientation: " << fspherical_orientation << std::endl;
+    std::cout << "Spherical IDs: ";
+    for (auto id : fspherical_ids) std::cout << id << " ";
+    std::cout << std::endl;
 
-    FLASH_DEBUG() << "Rectangular Type: " << frectengular_type << std::endl;
-    FLASH_DEBUG() << "Rectangular Orientation: " << frectengular_orientation << std::endl;
-    FLASH_DEBUG() << "Rectangular Height: " << frectengular_height << std::endl;
-    FLASH_DEBUG() << "Rectangular Width: " << frectengular_width << std::endl;
-    FLASH_DEBUG() << "Rectangular IDs: ";
-    for (auto id : frectengular_ids) FLASH_DEBUG() << id << " ";
-    FLASH_DEBUG() << std::endl;
+    std::cout << "Rectangular Type: " << frectengular_type << std::endl;
+    std::cout << "Rectangular Orientation: " << frectengular_orientation << std::endl;
+    std::cout << "Rectangular Height: " << frectengular_height << std::endl;
+    std::cout << "Rectangular Width: " << frectengular_width << std::endl;
+    std::cout << "Rectangular IDs: ";
+    for (auto id : frectengular_ids) std::cout << id << " ";
+    std::cout << std::endl;
 
-    FLASH_DEBUG() << "Number of Optical Detectors: " << fNOpDets << std::endl;
+    std::cout << "Number of Optical Detectors: " << fNOpDets << std::endl;
 
-    FLASH_DEBUG() << "Gaisser-Hillas VUV Parameters:" << std::endl;
+    std::cout << "Gaisser-Hillas VUV Parameters:" << std::endl;
     if (fIsFlatPDCorr) {
-        FLASH_DEBUG() << "  Flat Correction:" << std::endl;
+        std::cout << "  Flat Correction:" << std::endl;
         for (const auto& vec : fGHvuvpars_flat) {
             for (double val : vec) {
-                FLASH_DEBUG() << "    " << val << std::endl;
+                std::cout << "    " << val << std::endl;
             }
         }
     }
     if (fIsDomePDCorr) {
-        FLASH_DEBUG() << "  Dome Correction:" << std::endl;
+        std::cout << "  Dome Correction:" << std::endl;
         for (const auto& vec : fGHvuvpars_dome) {
             for (double val : vec) {
-                FLASH_DEBUG() << "    " << val << std::endl;
+                std::cout << "    " << val << std::endl;
             }
         }
     }
     if (fIsFlatPDCorrLat) {
-        FLASH_DEBUG() << "  Flat Lateral Correction:" << std::endl;
+        std::cout << "  Flat Lateral Correction:" << std::endl;
         for (const auto& vec : fGHvuvpars_flat_lateral) {
             for (double val : vec) {
-                FLASH_DEBUG() << "    " << val << std::endl;
+                std::cout << "    " << val << std::endl;
             }
         }
     }
     //Print absoprtion spectrum
     for (auto elem : abs_length_spectrum) {
-      FLASH_DEBUG()
+      std::cout
         << "Wavelength: " << elem.first << " cm, Absorption Energy: " << elem.second << " eV"
         << std::endl;
     }
 
     //Print QE of optical detectors
-    FLASH_DEBUG() << "Optical Detector Quantum Efficiencies (_qe_v): " << std::endl;
+    std::cout << "Optical Detector Quantum Efficiencies (_qe_v): " << std::endl;
     for (double qe : _qe_v) {
-      FLASH_DEBUG() << qe << " ";
+      std::cout << qe << " ";
     }
-    FLASH_DEBUG() << std::endl;
-    FLASH_DEBUG() << "Optical Detector reflected Quantum Efficiencies (_qe_refl_v): " << std::endl;
+    std::cout << std::endl;
+    std::cout << "Optical Detector reflected Quantum Efficiencies (_qe_refl_v): " << std::endl;
     for (double qe : _qe_refl_v) {
-      FLASH_DEBUG() << qe << " ";
+      std::cout << qe << " ";
     }
-    FLASH_DEBUG() << std::endl;
+    std::cout << std::endl;
 
-    FLASH_DEBUG() << "End of SemiAnalyticalModel Configuration." << std::endl;
-    FLASH_DEBUG() << "-------------------------------------------------" << std::endl;
+    std::cout << "End of SemiAnalyticalModel Configuration." << std::endl;
+    std::cout << "-------------------------------------------------" << std::endl;
   }
 
   void SemiAnalyticalModel::printVUVParameters() const {
-    FLASH_DEBUG() << "FlatPDCorr: " << (fIsFlatPDCorr ? "true" : "false") << std::endl;
-    FLASH_DEBUG() << "FlatPDCorrLat: " << (fIsFlatPDCorrLat ? "true" : "false") << std::endl;
-    FLASH_DEBUG() << "DomePDCorr: " << (fIsDomePDCorr ? "true" : "false") << std::endl;
-    FLASH_DEBUG() << "Delta Angulo VUV: " << fdelta_angulo_vuv << std::endl;
-    FLASH_DEBUG() << "PMT Radius: " << fradius << std::endl;
-    FLASH_DEBUG() << "ApplyFieldCageTransparency: " << (fApplyFieldCageTransparency ? "true" : "false") << std::endl;
-    FLASH_DEBUG() << "FieldCageTransparencyLateral: " << fFieldCageTransparencyLateral << std::endl;
-    FLASH_DEBUG() << "FieldCageTransparencyCathode: " << fFieldCageTransparencyCathode << std::endl;
-    FLASH_DEBUG() << "VUV absorption length: " << fvuv_absorption_length << std::endl;
+    std::cout << "FlatPDCorr: " << (fIsFlatPDCorr ? "true" : "false") << std::endl;
+    std::cout << "FlatPDCorrLat: " << (fIsFlatPDCorrLat ? "true" : "false") << std::endl;
+    std::cout << "DomePDCorr: " << (fIsDomePDCorr ? "true" : "false") << std::endl;
+    std::cout << "Delta Angulo VUV: " << fdelta_angulo_vuv << std::endl;
+    std::cout << "PMT Radius: " << fradius << std::endl;
+    std::cout << "ApplyFieldCageTransparency: " << (fApplyFieldCageTransparency ? "true" : "false") << std::endl;
+    std::cout << "FieldCageTransparencyLateral: " << fFieldCageTransparencyLateral << std::endl;
+    std::cout << "FieldCageTransparencyCathode: " << fFieldCageTransparencyCathode << std::endl;
+    std::cout << "VUV absorption length: " << fvuv_absorption_length << std::endl;
     if (fIsFlatPDCorr) {
-        FLASH_DEBUG() << "GH Parameters Flat: " << std::endl;
+        std::cout << "GH Parameters Flat: " << std::endl;
         for (const auto& vec : fGHvuvpars_flat) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
-        FLASH_DEBUG() << "Border Correction Angle Flat: ";
+        std::cout << "Border Correction Angle Flat: ";
         for (double val : fborder_corr_angulo_flat) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "Border Correction Flat: " << std::endl;
+        std::cout << "Border Correction Flat: " << std::endl;
         for (const auto& vec : fborder_corr_flat) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
     }
 
     if (fIsFlatPDCorrLat) {
-        FLASH_DEBUG() << "GH Parameters Flat Lateral: " << std::endl;
+        std::cout << "GH Parameters Flat Lateral: " << std::endl;
         for (const auto& vec : fGHvuvpars_flat_lateral) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
-        FLASH_DEBUG() << "Border Correction Angle Flat Lateral: ";
+        std::cout << "Border Correction Angle Flat Lateral: ";
         for (double val : fborder_corr_angulo_flat_lateral) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "Border Correction Flat Lateral: " << std::endl;
+        std::cout << "Border Correction Flat Lateral: " << std::endl;
         for (const auto& vec : fborder_corr_flat_lateral) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
     }
 
     if (fIsDomePDCorr) {
-        FLASH_DEBUG() << "GH Parameters Dome: " << std::endl;
+        std::cout << "GH Parameters Dome: " << std::endl;
         for (const auto& vec : fGHvuvpars_dome) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
-        FLASH_DEBUG() << "Border Correction Angle Dome: ";
+        std::cout << "Border Correction Angle Dome: ";
         for (double val : fborder_corr_angulo_dome) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "Border Correction Dome: " << std::endl;
+        std::cout << "Border Correction Dome: " << std::endl;
         for (const auto& vec : fborder_corr_dome) {
             for (double val : vec) {
-                FLASH_DEBUG() << val << " ";
+                std::cout << val << " ";
             }
-            FLASH_DEBUG() << std::endl;
+            std::cout << std::endl;
         }
     }
   }
 
   void SemiAnalyticalModel::printVISParameters() const {
-    FLASH_DEBUG() << "Delta Angulo VIS: " << fdelta_angulo_vis << std::endl;
+    std::cout << "Delta Angulo VIS: " << fdelta_angulo_vis << std::endl;
 
     if (fIsFlatPDCorr) {
-        FLASH_DEBUG() << "VIS Distances X Flat: ";
+        std::cout << "VIS Distances X Flat: ";
         for (double val : fvis_distances_x_flat) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Distances R Flat: ";
+        std::cout << "VIS Distances R Flat: ";
         for (double val : fvis_distances_r_flat) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Corrections Flat: " << std::endl;
+        std::cout << "VIS Corrections Flat: " << std::endl;
         for (const auto& layer : fvispars_flat) {
             for (const auto& row : layer) {
                 for (double val : row) {
-                    FLASH_DEBUG() << val << " ";
+                    std::cout << val << " ";
                 }
-                FLASH_DEBUG() << std::endl;
+                std::cout << std::endl;
             }
-            FLASH_DEBUG() << "------" << std::endl;
+            std::cout << "------" << std::endl;
         }
     }
 
     if (fIsFlatPDCorrLat) {
-        FLASH_DEBUG() << "VIS Distances X Flat Lateral: ";
+        std::cout << "VIS Distances X Flat Lateral: ";
         for (double val : fvis_distances_x_flat_lateral) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Distances R Flat Lateral: ";
+        std::cout << "VIS Distances R Flat Lateral: ";
         for (double val : fvis_distances_r_flat_lateral) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Corrections Flat Lateral: " << std::endl;
+        std::cout << "VIS Corrections Flat Lateral: " << std::endl;
         for (const auto& layer : fvispars_flat_lateral) {
             for (const auto& row : layer) {
                 for (double val : row) {
-                    FLASH_DEBUG() << val << " ";
+                    std::cout << val << " ";
                 }
-                FLASH_DEBUG() << std::endl;
+                std::cout << std::endl;
             }
-            FLASH_DEBUG() << "------" << std::endl;
+            std::cout << "------" << std::endl;
         }
     }
 
     if (fIsDomePDCorr) {
-        FLASH_DEBUG() << "VIS Distances X Dome: ";
+        std::cout << "VIS Distances X Dome: ";
         for (double val : fvis_distances_x_dome) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Distances R Dome: ";
+        std::cout << "VIS Distances R Dome: ";
         for (double val : fvis_distances_r_dome) {
-            FLASH_DEBUG() << val << " ";
+            std::cout << val << " ";
         }
-        FLASH_DEBUG() << std::endl;
+        std::cout << std::endl;
 
-        FLASH_DEBUG() << "VIS Corrections Dome: " << std::endl;
+        std::cout << "VIS Corrections Dome: " << std::endl;
         for (const auto& layer : fvispars_dome) {
             for (const auto& row : layer) {
                 for (double val : row) {
-                    FLASH_DEBUG() << val << " ";
+                    std::cout << val << " ";
                 }
-                FLASH_DEBUG() << std::endl;
+                std::cout << std::endl;
             }
-            FLASH_DEBUG() << "------" << std::endl;
+            std::cout << "------" << std::endl;
         }
     }
 
-    FLASH_DEBUG() << "Cathode Plane Height: " << fcathode_plane.h << std::endl;
-    FLASH_DEBUG() << "Cathode Plane Width: " << fcathode_plane.w << std::endl;
-    FLASH_DEBUG() << "Plane Depth: " << fplane_depth << std::endl;
-    FLASH_DEBUG() << "Anode Reflectivity: " << fAnodeReflectivity << std::endl;
+    std::cout << "Cathode Plane Height: " << fcathode_plane.h << std::endl;
+    std::cout << "Cathode Plane Width: " << fcathode_plane.w << std::endl;
+    std::cout << "Plane Depth: " << fplane_depth << std::endl;
+    std::cout << "Anode Reflectivity: " << fAnodeReflectivity << std::endl;
   }
 } // namespace flashmatch

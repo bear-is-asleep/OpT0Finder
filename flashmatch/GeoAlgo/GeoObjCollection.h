@@ -23,6 +23,7 @@
 #include "GeoSphere.h"
 #include "GeoAlgoException.h"
 #include <map>
+#include "TString.h"
 namespace geoalgo {
 
   /**
