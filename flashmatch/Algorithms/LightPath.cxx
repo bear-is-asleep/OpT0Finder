@@ -19,13 +19,15 @@ namespace flashmatch {
     _gap          = pset.get< double > ( "SegmentSize" );
     _light_yield  = DetectorSpecs::GetME().LightYield();
     _dEdxMIP      = DetectorSpecs::GetME().MIPdEdx();
+    std::cout<<"_gap: "<<_gap<<std::endl;
+    std::cout<<"_light_yield: "<<_light_yield<<std::endl;
+    std::cout<<"_dEdxMIP: "<<_dEdxMIP<<std::endl;
   }
 
   void LightPath::MakeQCluster(const ::geoalgo::Vector& pt_1,
 			       const ::geoalgo::Vector& pt_2,
 			       QCluster_t& Q_cluster,
 			       double dedx) const {
-
     if(dedx < 0) dedx = _dEdxMIP;
 
     double dist = pt_1.Dist(pt_2);
@@ -129,6 +131,33 @@ namespace flashmatch {
       q_pt.y = trj[i][1];
       q_pt.z = trj[i][2];
       q_pt.q = trj[i][3] * _light_yield * ADC_to_MeV;
+      result.emplace_back(q_pt);
+    }
+    FLASH_INFO() << result << std::endl;
+    return result;
+  }
+
+  QCluster_t LightPath::MakeQCluster(const ::geoalgo::Trajectory& trj,
+                                     const double& ADC_to_MeV,
+                                     const double& alpha,
+                                     const double& recombination_mip) const {
+    /*
+    Charge-light anti correlation necessitates recombination_mip factor for MIP particles
+    https://arxiv.org/pdf/1909.07920
+    */
+
+    double gamma = 1 + alpha;
+    QCluster_t result;
+    result.clear();
+    assert(trj[0].size() == 4);
+
+    // Add QPoints to QCluster
+    for (size_t i=0; i<trj.size(); i++) {
+      QPoint_t q_pt;
+      q_pt.x = trj[i][0];
+      q_pt.y = trj[i][1];
+      q_pt.z = trj[i][2];
+      q_pt.q = trj[i][3] * _light_yield * ADC_to_MeV * (1-recombination_mip/gamma);
       result.emplace_back(q_pt);
     }
     FLASH_INFO() << result << std::endl;

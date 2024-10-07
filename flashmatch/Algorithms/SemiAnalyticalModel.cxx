@@ -193,6 +193,9 @@ namespace flashmatch{
     for (auto& v : flash.pe_err_v  ) {v = 0;}
     for (auto& v : flash.pe_true_v ) {v = 0;}
 
+    // Temporary for printout
+    double q_tot = 0;
+    // end of temporary for printout
     for ( size_t ipt = 0; ipt < trk.size(); ++ipt) {
       /// Get the 3D point in space from where photons should be propagated
       auto const& pt = trk[ipt];
@@ -200,6 +203,7 @@ namespace flashmatch{
       geoalgo::Point_t const xyz = {pt.x, pt.y, pt.z};
 
       double n_original_photons = pt.q;
+      q_tot += n_original_photons;
 
       std::vector<double> direct_visibilities;
       detectedDirectVisibilities(direct_visibilities, xyz);
@@ -207,6 +211,18 @@ namespace flashmatch{
 
       std::vector<double> reflected_visibilities;
       detectedReflectedVisibilities(reflected_visibilities, xyz);
+
+      // if (ipt < 3){
+      //   for (size_t op_det=0; op_det<direct_visibilities.size(); ++op_det) {
+      //     if (op_det > 40){
+      //       break;
+      //     }
+      //     std::cout<<"[x,y,z]: "<<pt.x<<", "<<pt.y<<", "<<pt.z<<std::endl;
+      //     std::cout<<"op_det: "<<op_det<<std::endl;
+      //     std::cout<<"direct_visibilities[op_det]: "<<direct_visibilities[op_det]<<std::endl;
+      //     std::cout<<"reflected_visibilities[op_det]: "<<reflected_visibilities[op_det]<<std::endl;
+      //   }
+      // }
 
       //
       // Fill Estimate with Direct light
@@ -216,11 +232,12 @@ namespace flashmatch{
 
         double q = n_original_photons * visibility * _global_qe * _qe_v[op_det];
 
-        if (std::find(_channel_mask.begin(), _channel_mask.end(), op_det) != _channel_mask.end()) {
-          flash.pe_v[op_det] += q;
-        } else {
-          flash.pe_v[op_det] = 0;
-        }
+        flash.pe_v[op_det] += q;
+        // if (std::find(_channel_mask.begin(), _channel_mask.end(), op_det) != _channel_mask.end()) {
+        //   flash.pe_v[op_det] += q;
+        // } else {
+        //   flash.pe_v[op_det] = 0;
+        // }
       }
 
       //
@@ -230,20 +247,38 @@ namespace flashmatch{
         const double visibility = reflected_visibilities[op_det];
         double q = n_original_photons * visibility * _global_qe_refl * _qe_refl_v[op_det];
 
-        if (std::find(_channel_mask.begin(), _channel_mask.end(), op_det) != _channel_mask.end()) {
-          flash.pe_v[op_det] += q;
-        } else {
-          flash.pe_v[op_det] = 0;
-        }
+        flash.pe_v[op_det] += q;
+        // if (std::find(_channel_mask.begin(), _channel_mask.end(), op_det) != _channel_mask.end()) {
+        //   flash.pe_v[op_det] += q;
+        // } else {
+        //   flash.pe_v[op_det] = 0;
+        // }
       }
     }
     //Count number of valid channels
+    // int cnt = 0;
+    // std::cout<<"flash.pe_v.size(): "<<flash.pe_v.size()<<std::endl;
+    // for (size_t op_det=0; op_det<flash.pe_v.size(); ++op_det) {
+    //   if (flash.pe_v[op_det] > 0){
+    //     cnt++;
+    //   }
+    //   else{
+    //     continue;
+    //   }
+    //   std::cout<<"op_det: "<<op_det<<std::endl;
+    //   std::cout<<"flash.pe_v[op_det]: "<<flash.pe_v[op_det]<<std::endl;
+    //   //if (cnt > 8){
+    //   if (op_det > 40){
+    //     break;
+    //   }
+    // }
     
     // Print outs to check validity of filling the flashes
     FLASH_DEBUG() << "Filled flash with " << _channel_mask.size() << " PMTs ... " 
     << " Valid: " << flash.Valid(fNOpDets) << " Total PE: " << flash.TotalPE() 
     << " trk.size(): " << trk.size()
     << "Flash [x,y,z] -> [Total PE] : [" << flash.x << ", " << flash.y << ", " << flash.z << "] -> [" << flash.TotalPE() << "]"
+    << " q_total: " << q_tot
     << " idx: " << flash.idx << std::endl;
     // Check validity of flash
     if (!flash.Valid(fNOpDets)) {
@@ -879,10 +914,10 @@ namespace flashmatch{
     for (size_t ch = 0; ch < opDetCenters.size(); ch++) {
       geoalgo::Point_t center(opDetCenters[ch][0], opDetCenters[ch][1], opDetCenters[ch][2]);
       //Continue if channel is NOT in _channel_mask
-      if (std::find(_channel_mask.begin(), _channel_mask.end(), ch) == _channel_mask.end()) {
-        FLASH_DEBUG() << "SKIPPED Optical Detector " << ch << " center: " << center[0] << " " << center[1] << " " << center[2] << std::endl;
-        continue;
-      }
+      // if (std::find(_channel_mask.begin(), _channel_mask.end(), ch) == _channel_mask.end()) {
+      //   FLASH_DEBUG() << "SKIPPED Optical Detector " << ch << " center: " << center[0] << " " << center[1] << " " << center[2] << std::endl;
+      //   continue;
+      // }
       assert(center.size()==3);
       // Check if it's rectangular or spherical
       if (std::find(fspherical_ids.begin(), fspherical_ids.end(), ch) != fspherical_ids.end()) {
