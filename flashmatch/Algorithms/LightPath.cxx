@@ -19,9 +19,6 @@ namespace flashmatch {
     _gap          = pset.get< double > ( "SegmentSize" );
     _light_yield  = DetectorSpecs::GetME().LightYield();
     _dEdxMIP      = DetectorSpecs::GetME().MIPdEdx();
-    std::cout<<"_gap: "<<_gap<<std::endl;
-    std::cout<<"_light_yield: "<<_light_yield<<std::endl;
-    std::cout<<"_dEdxMIP: "<<_dEdxMIP<<std::endl;
   }
 
   void LightPath::MakeQCluster(const ::geoalgo::Vector& pt_1,
