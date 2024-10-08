@@ -83,6 +83,7 @@ namespace flashmatch{
     double _gap;
     double _light_yield;
     double _dEdxMIP;
+    double _w_photon;
   };
 
   /**

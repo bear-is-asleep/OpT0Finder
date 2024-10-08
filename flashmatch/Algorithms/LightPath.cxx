@@ -9,9 +9,10 @@ namespace flashmatch {
 
   LightPath::LightPath(const std::string name)
     : BaseAlgorithm(kCustomAlgo, name)
-    , _gap         ( 0.5    )
-    , _light_yield ( 40000. )
-    , _dEdxMIP     ( 2.07   ) //1.42[Mev*cm^2*g]*1.4[g/cm^3]=2.004MeV/cm
+    , _gap         ( 0.5     )
+    , _light_yield ( 40000.  )
+    , _dEdxMIP     ( 2.07    ) //1.42[Mev*cm^2*g]*1.4[g/cm^3]=2.004MeV/cm
+    , _w_photon    ( 19.5*1e-6) // 19.5e-6 MeV per photon - https://iopscience.iop.org/article/10.1143/JJAP.41.1538/pdf
   {}
 
   void LightPath::_Configure_(const Config_t &pset)
@@ -154,7 +155,7 @@ namespace flashmatch {
       q_pt.x = trj[i][0];
       q_pt.y = trj[i][1];
       q_pt.z = trj[i][2];
-      q_pt.q = trj[i][3] * _light_yield * ADC_to_MeV * (1-recombination_mip/gamma);
+      q_pt.q = trj[i][3] / _w_photon * ADC_to_MeV * (1-recombination_mip/gamma);
       result.emplace_back(q_pt);
     }
     FLASH_INFO() << result << std::endl;
