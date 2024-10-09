@@ -23,6 +23,16 @@ namespace geoalgo {
     if(min.size()!=3 || max.size()!=3)
       throw GeoAlgoException("AABox ctor accepts only 3D Point!");
   }
+
+  //Size attributes
+  double AABox::SizeX() const { return _max[0] - _min[0]; }
+  double AABox::SizeY() const { return _max[1] - _min[1]; }
+  double AABox::SizeZ() const { return _max[2] - _min[2]; }
+
+  //Center attribute
+  Point_t AABox::Center() const {
+    return Point_t((_min[0]+_max[0])/2.,(_min[1]+_max[1])/2.,(_min[2]+_max[2])/2.);
+  }
   
   const Point_t& AABox::Min() const { return _min; }
   const Point_t& AABox::Max() const { return _max; }

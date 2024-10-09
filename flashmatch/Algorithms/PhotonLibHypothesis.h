@@ -65,7 +65,6 @@ namespace flashmatch {
     void _Configure_(const Config_t &pset);
 
     double _global_qe;             ///< Global QE
-    double _global_qe_refl;        ///< Global QE for reflected light
     double _sigma_qe;              ///< Sigma for Gaussian centered on Global QE
     std::vector<double> _qe_v;     ///< PMT-wise relative QE
     double _reco_pe_calib;         ///< A global calibration factor for reconstructed PE 

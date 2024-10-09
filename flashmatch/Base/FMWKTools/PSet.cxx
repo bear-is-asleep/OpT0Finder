@@ -42,6 +42,7 @@ namespace flashmatch {
     for(auto const& key_value : _data_pset) res.push_back(key_value.first);
     return res;
   }
+
   bool PSet::contains_value (const std::string& key) const
   {
     return (_data_value.find(key) != _data_value.end());

@@ -32,23 +32,40 @@ namespace flashmatch {
     /// Default destructor
     ~BaseFlashHypothesis(){}
 
+    // _Configure_
+    void _Configure_(const Config_t &pset);
+
     /// Method to create flashmatch::Flash_t object and return
     Flash_t GetEstimate(const QCluster_t&) const;
 
     /// Method to simply fill provided reference of flashmatch::Flash_t
     virtual void FillEstimate(const QCluster_t&, Flash_t&) const = 0;
 
+    /// Sets pds_mask_v in flash method
+    void InitializeMask(Flash_t &flash) const;
+
     /// Sets the channels to use
-    void SetChannelMask(std::vector<size_t> ch_mask);
+    void SetChannelMask(std::vector<int> ch_mask) { 
+      FLASH_DEBUG() << "Setting channel mask: " << ch_mask.size() << std::endl;
+      _channel_mask = ch_mask;
+    }
+
+    /// Sets the channel type (pmt vs. xarapuca)
+    void SetChannelType(std::vector<int> ch_type) { _channel_type = ch_type; }
 
     /// Sets the channels sensitive to visible light
-    void SetUncoatedPMTs(std::vector<size_t> ch_uncoated);
+    void SetUncoatedPMTs(std::vector<int> ch_uncoated) { _uncoated_pmt_list = ch_uncoated; }
 
   protected:
 
-    std::vector<bool> _channel_mask; ///< The list of channels to use
-    std::vector<bool> _uncoated_pmt_list; ///< A list of opdet sensitive to visible (reflected) light
-
+    std::vector<int> _channel_type; 
+    std::vector<int> _channel_mask; ///< The list of channels mask use of
+    std::vector<int> _uncoated_pmt_list; ///< A list of opdet sensitive to visible (reflected) light
+    double _threshold_proximity; ///< Threshold for proximity
+    double _segment_size; ///< Segment size
+    double _global_qe;
+    std::vector<double> _qe_v;     ///< OpDet-wise relative QE for direct light
+    double _global_qe_refl;        ///< Global QE for reflected light
   };
 }
 #endif

@@ -113,7 +113,7 @@ namespace flashmatch {
     //FlashMatch_t TouchingTrack(const QCluster_t &pt_v, const Flash_t & flash, double score, bool tpc0);
     void PESpectrumMatch(const Flash_t &flash, const double x0, FlashMatch_t& match);
     std::vector<double> CalculateX0(const Flash_t &pmt);
-    void OnePMTMatch(const Flash_t &flash,FlashMatch_t& match);
+    FlashMatch_t OnePMTSpectrumMatch(const Flash_t& flash);
 
     static QLLMatch* _me;
 
@@ -168,9 +168,17 @@ namespace flashmatch {
     double _onepmt_pesum_threshold;
     double _onepmt_pefrac_threshold;
 
-    double _vol_xmax, _vol_xmin;
     std::vector<double> _xpos_v, _ypos_v, _zpos_v;
     std::vector<double> _exp_frac_v, _exp_tau_v;
+
+    std::vector<int> _tpc_v; ///< TPC number to consider
+    bool _many_to_many; ///< If true, allow multiple TPC objects to be matched to the same flash, else one to many
+    std::vector<int> _match_mask; ///< OpDet Channel Mask for a cluster+flash pair 
+
+    double _saturated_thresh; // threshold for hypothesis PE to ignore due to saturated measured PE 
+    double _nonlinear_thresh; // parameters to correct for nonlinear **PMT** effects
+    double _nonlinear_slope;  // parameters to correct for nonlinear **PMT** effects
+    double _nonlinear_offset; // parameters to correct for nonlinear **PMT** effects
   };
 
   /**
