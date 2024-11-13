@@ -40,10 +40,10 @@ namespace flashmatch {
 
     //Below is used in semi-analytical method
     _many_to_many             = pset.get<bool>("UseManyToMany", true);
-    _saturated_thresh = pset.get<double>("SaturatedThreshold");
-    _nonlinear_thresh = pset.get<double>("NonLinearThreshold");
-    _nonlinear_slope  = pset.get<double>("NonLinearSlope");
-    _nonlinear_offset = pset.get<double>("NonLinearOffset");
+    _saturated_thresh = pset.get<double>("SaturatedThreshold", -1);
+    _nonlinear_thresh = pset.get<double>("NonLinearThreshold", 5e3);
+    _nonlinear_slope  = pset.get<double>("NonLinearSlope", 0.75);
+    _nonlinear_offset = pset.get<double>("NonLinearOffset", 0.75e3);
     // _custom_algo              = pset.get<std::string>("CustomAlgo", "");
     // if (!_custom_algo.empty()) _alg_custom_algo = CustomAlgoFactory::get().create(_custom_algo, _custom_algo);
     // if (_alg_custom_algo) {
@@ -97,8 +97,8 @@ namespace flashmatch {
     // Inspect, in either assumption (original track is in tpc0 or tpc1), the track is contained in the whole active volume or not
     bool contained_tpc0 = reco_x_tpc0 >= _vol_xmin - tolerance && (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance; 
     bool contained_tpc1 = reco_x_tpc1 >= _vol_xmin - tolerance && (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance;
-    FLASH_DEBUG() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
-    FLASH_DEBUG() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
+    FLASH_INFO() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
+    FLASH_INFO() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
     if (contained_tpc0 && reco_x_tpc0 > _vol_xmin) {
       x0_v.push_back(std::max(reco_x_tpc0, _vol_xmin + _offset));
     }
@@ -133,7 +133,7 @@ namespace flashmatch {
 
     _raw_trk.tpc_mask_v = _match_mask;
     // End of removing ^^
-    FLASH_DEBUG() << "Starting a match... "
+    FLASH_INFO() << "Starting a match... "
     << "MC info: tpc true time " << pt_v.time_true 
     << " Flash true time " << flash.time_true << std::endl;    
     //
@@ -625,6 +625,7 @@ namespace flashmatch {
     arglist[0] = 5000;  // maxcalls
     arglist[1] = _migrad_tolerance; // tolerance*1e-3 = convergence condition
     _minuit_ptr->mnexcm("MIGRAD", arglist, 2, ierrflag);
+
 
     _converged = true;
 

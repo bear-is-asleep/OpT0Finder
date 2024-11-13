@@ -30,7 +30,7 @@ namespace flashmatch {
 
     //Debug statements
     for(size_t i=0; i<_channel_mask.size(); ++i) {
-      FLASH_DEBUG() << "Channel " << i << " is masked." << std::endl;
+      FLASH_DEBUG() << "Channel " << i << " is masked to " << _channel_mask[i] << std::endl;
     }
 
   }
