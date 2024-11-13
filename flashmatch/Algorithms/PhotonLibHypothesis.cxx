@@ -198,14 +198,6 @@ namespace flashmatch {
                 double qsum = 0.;
                 double vsum = 0.;
                 for(size_t ipmt=0; ipmt < n_pmt; ++ipmt) {
-                    if (ipt == 0 && thread_id == 0 && ipmt < 40) {
-                        FLASH_DEBUG() << "PMT " << ipmt << " ... channel mask " << _channel_mask[ipmt] << 
-                        " ... uncoated " << _uncoated_pmt_list[ipmt] <<
-                        " ... qe " << _qe_v[ipmt] << 
-                        " ... lib_data " << lib_data[ipmt] <<
-                        " ... pt.q " << pt.q << std::endl;
-                    }
-
 
                     if(_channel_mask[ipmt] < 0) continue; //this is a vector of ints, mapping an index to a pmt
 
@@ -232,11 +224,11 @@ namespace flashmatch {
                     double q0 = (local_pe_v[ipmt] * _global_qe * _reco_pe_calib / _qe_v[ipmt]);
                     double q1 = (local_pe_refl_v[ipmt] * _global_qe_refl * _reco_pe_calib / _qe_v[ipmt]);
                     double q = q0 + q1;
-                    if (thread_id == 0 && ipmt < 40) {
-                        FLASH_DEBUG() << "PMT (filling flash)" << ipmt << " ... q0 " << q0 << " ... q1 " << q1 << " ... q " << q << 
-                        " ... local_pe_v " << local_pe_v[ipmt] << " ... local_pe_refl_v " << local_pe_refl_v[ipmt] << " ... _global_qe " << _global_qe <<
-                        " ... _global_qe_refl " << _global_qe_refl << " ... _reco_pe_calib " << _reco_pe_calib << " ... _qe_v " << _qe_v[ipmt] << std::endl;
-                    }
+                    // if (thread_id == 0 && ipmt < 40) {
+                    //     FLASH_DEBUG() << "PMT (filling flash)" << ipmt << " ... q0 " << q0 << " ... q1 " << q1 << " ... q " << q << 
+                    //     " ... local_pe_v " << local_pe_v[ipmt] << " ... local_pe_refl_v " << local_pe_refl_v[ipmt] << " ... _global_qe " << _global_qe <<
+                    //     " ... _global_qe_refl " << _global_qe_refl << " ... _reco_pe_calib " << _reco_pe_calib << " ... _qe_v " << _qe_v[ipmt] << std::endl;
+                    // }
                     flash.pe_v[ipmt] +=  q;
                     qsum += q; // for debug cout
                 }
