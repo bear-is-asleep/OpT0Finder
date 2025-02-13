@@ -30,6 +30,7 @@ namespace flashmatch {
     _check_touching_track = pset.get<bool>("CheckTouchingTrack");
     _normalize = pset.get<bool>("NormalizeHypothesis");
     _mode   = (QLLMode_t)(pset.get<unsigned short>("QLLMode"));
+    _chi_error = pset.get<double>("ChiErrorWidth", 0.1);
     _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.e-6);
     _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold", 1.e-6);
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
@@ -489,10 +490,12 @@ namespace flashmatch {
 
       } else if (_mode == kChi2) {
 
-      	Error = O;
-      	if( Error < 1.0 ) Error = 1.0;
-      	_current_chi2 += std::pow((O - H), 2) / (Error);
-      	nvalid_pmt += 1;
+      	// Error = O;
+        Error = H;
+        // if( Error < 1.0 ) Error = 1.0;
+        _current_chi2 += std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2));
+        //if(!(O==_pe_observation_threshold && H == _pe_hypothesis_threshold)) std::cout <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << std::pow((O - H), 2) / (Error + std::pow(0.1*Error,2)) << std::endl;
+        nvalid_pmt += 1;
 
       } else {
       	FLASH_ERROR() << "Unexpected mode" << std::endl;
