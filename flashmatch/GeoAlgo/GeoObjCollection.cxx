@@ -2,7 +2,7 @@
 #define BASICTOOL_GEOOBJCOLLECTION_CXX
 
 #include "GeoObjCollection.h"
-#include <TString.h>
+
 namespace geoalgo {
 
   GeoObjCollection::GeoObjCollection() 

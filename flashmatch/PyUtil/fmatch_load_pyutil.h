@@ -11,26 +11,26 @@
 /** \addtogroup PyUtil
 
     @{*/
-#ifndef LOAD_PYUTIL_H
-#define LOAD_PYUTIL_H
+#ifndef FMATCH_LOAD_PYUTIL_H
+#define FMATCH_LOAD_PYUTIL_H
 
 #include <iostream>
 
 namespace flashmatch {
   /**
      \class load_pyutil
-     User defined class load_pyutil ... these comments are used to generate
+     User defined class fmatch_load_pyutil ... these comments are used to generate
      doxygen documentation!
   */
-  class load_pyutil{
+  class fmatch_load_pyutil{
     
   public:
     
     /// Default constructor
-    load_pyutil();
+    fmatch_load_pyutil();
 
     /// Default destructor
-    ~load_pyutil(){}
+    ~fmatch_load_pyutil(){}
     
   };
 }

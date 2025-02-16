@@ -9,14 +9,14 @@
 #include "LoggerFeature.h"
 
 #if USING_LARSOFT == 0
-#include "FMWKTools/ConfigManager.h"
+#include "FMWKTools/FMConfigManager.h"
 #include "FMWKTools/PhotonVoxels.h"
 #include "flashmatch/GeoAlgo/GeoAABox.h"
-#include "flashmatch/Base/FMWKTools/PSetUtils.h"
+#include "flashmatch/Base/FMWKTools/FMParamsUtils.h"
 #include "flashmatch/Base/FMWKTools/PhotonVisibilityService.h"
 namespace flashmatch {
   /// Configuration object
-  using Config_t = flashmatch::PSet;
+  using Config_t = flashmatch::FMParams;
 }
 #else
 #include "lardataobj/Utilities/LazyVector.h"
@@ -122,7 +122,7 @@ namespace flashmatch {
       if(filename.find("/") != 0)
         filename = std::string(getenv("FMATCH_DATADIR")) + "/" + filename;
 
-      auto cfg = CreatePSetFromFile(filename,"cfg");
+      auto cfg = CreateFMParamsFromFile(filename,"cfg");
       auto const& p = cfg.get<::flashmatch::Config_t>("DetectorSpecs");
 
       if(!_me) _me = new DetectorSpecs(p);
