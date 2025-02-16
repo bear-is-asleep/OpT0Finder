@@ -8,7 +8,7 @@
 #include <cmath>
 
 #ifndef USING_LARSOFT
-#define USING_LARSOFT 1
+#define USING_LARSOFT 0
 #endif
 
 #if USING_LARSOFT == 0
@@ -50,6 +50,7 @@ namespace flashmatch {
     double time_true;         ///< MCFlash timing (if it was matched to a MCFlash)
     double time_width;        ///< Flash time integration window
     double dt_next, dt_prev;
+    std::vector<int> pds_mask_v; ///< Mask for PD object association to be combined with cluster mask
     ID_t idx;                 ///< index from original larlite vector
     //ID_t ROOT_idx;            ///< index in root file
     /// Default ctor assigns invalid values
@@ -135,9 +136,10 @@ namespace flashmatch {
     double time;  ///< assumed time w.r.t. trigger for reconstruction
     double time_true; ///< Time from MCTrack information
     double min_x_true; ///< True x-minimum value
+    std::vector<int> tpc_mask_v; ///< Mask for TPC object association
 
     /// Default constructor
-    QCluster_t() : idx(kINVALID_ID), time(kINVALID_DOUBLE), time_true(kINVALID_DOUBLE), min_x_true(kINVALID_DOUBLE) {}
+    QCluster_t() : idx(kINVALID_ID), time(kINVALID_DOUBLE), time_true(kINVALID_DOUBLE), min_x_true(kINVALID_DOUBLE), tpc_mask_v() {}
     ~QCluster_t() {}
 
     /// returns the sum of "q" from QPoint_t

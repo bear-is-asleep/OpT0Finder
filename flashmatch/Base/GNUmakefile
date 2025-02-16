@@ -6,7 +6,7 @@ PACKAGE_NAME = Base
 # specific names for this package
 SOURCES = $(wildcard *.cxx)
 FMWK_HEADERS = LinkDef.h stack_trace.h
-HEADERS = $(filter-out $(FMWK_HEADERS), $(wildcard *.h))
+HEADERS = $(filter-out $(FMWK_HEADERS), $(wildcard *.h)) 
 HEADERS_DEST = flashmatch/$(PACKAGE_NAME)
 #IMPS = $(wildcard *.inl)
 

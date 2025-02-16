@@ -37,6 +37,13 @@ namespace flashmatch {
 		_time_shift               = pset.get<double>("BeamTimeShift", 0.0);
     _touching_track_window    = pset.get<double>("TouchingTrackWindow", 5.0);
     _minuit_x_buffer          = pset.get<double>("MinuitXBuffer", 10.0);
+
+    //Below is used in semi-analytical method
+    _many_to_many             = pset.get<bool>("UseManyToMany", true);
+    _saturated_thresh = pset.get<double>("SaturatedThreshold");
+    _nonlinear_thresh = pset.get<double>("NonLinearThreshold");
+    _nonlinear_slope  = pset.get<double>("NonLinearSlope");
+    _nonlinear_offset = pset.get<double>("NonLinearOffset");
     // _custom_algo              = pset.get<std::string>("CustomAlgo", "");
     // if (!_custom_algo.empty()) _alg_custom_algo = CustomAlgoFactory::get().create(_custom_algo, _custom_algo);
     // if (_alg_custom_algo) {
@@ -90,8 +97,8 @@ namespace flashmatch {
     // Inspect, in either assumption (original track is in tpc0 or tpc1), the track is contained in the whole active volume or not
     bool contained_tpc0 = reco_x_tpc0 >= _vol_xmin - tolerance && (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance; 
     bool contained_tpc1 = reco_x_tpc1 >= _vol_xmin - tolerance && (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance;
-    FLASH_INFO() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
-    FLASH_INFO() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
+    FLASH_DEBUG() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
+    FLASH_DEBUG() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
     if (contained_tpc0 && reco_x_tpc0 > _vol_xmin) {
       x0_v.push_back(std::max(reco_x_tpc0, _vol_xmin + _offset));
     }
@@ -113,12 +120,27 @@ namespace flashmatch {
   }
 
   void QLLMatch::Match(const QCluster_t &pt_v, const Flash_t &flash, FlashMatch_t& match) {
-    FLASH_INFO() << "Starting a match... "
+    // combine cluster + flash mask for this match pair 
+    _match_mask.clear();
+    _match_mask.resize(DetectorSpecs::GetME().NOpDets(), 0);
+
+    // FIXME: Remove this since it's done in SPINE
+    for (size_t opch=0; opch < flash.pe_v.size(); opch++){
+      if (flash.pds_mask_v.at(opch)!=0 || pt_v.tpc_mask_v.at(opch)!=0){
+        _match_mask.at(opch) = 1;
+      }
+    }
+
+    _raw_trk.tpc_mask_v = _match_mask;
+    // End of removing ^^
+    FLASH_DEBUG() << "Starting a match... "
     << "MC info: tpc true time " << pt_v.time_true 
     << " Flash true time " << flash.time_true << std::endl;    
     //
     // Prepare TPC
     //
+    _raw_trk.idx = pt_v.idx; // charge cluster index
+    _var_trk.idx = pt_v.idx; // charge cluster index
     _raw_trk.resize(pt_v.size());
     double min_x =  1e20;
     double max_x = -1e20;
@@ -128,41 +150,117 @@ namespace flashmatch {
       if (pt.x < min_x) { min_x = pt.x; _raw_xmin_pt = pt; }
       if (pt.x > max_x) { max_x = pt.x; _raw_xmax_pt = pt; }
     }
-    for (auto &pt : _raw_trk) pt.x -= min_x;
+    if (_many_to_many){
+      for (auto &pt : _raw_trk) pt.x -= min_x;
 
-    // Calculate initial x positions
-    auto x0_v = this->CalculateX0(flash);
+      // Calculate initial x positions
+      auto x0_v = this->CalculateX0(flash);
 
-    std::vector<FlashMatch_t> res_v;
-    for(auto const& x0 : x0_v) {
-      FLASH_INFO() << "Flash match with x0 = " << x0 << std::endl;
-      FlashMatch_t res = match;
-      PESpectrumMatch(flash,x0,res);
-      
-      if(_record)
-        this->DumpHistory();
-      
-      res_v.emplace_back(std::move(res));
+      std::vector<FlashMatch_t> res_v;
+      for(auto const& x0 : x0_v) {
+        FLASH_INFO() << "Flash match with x0 = " << x0 << std::endl;
+        FlashMatch_t res = match;
+        PESpectrumMatch(flash,x0,res);
+        
+        if(_record)
+          this->DumpHistory();
+        
+        res_v.emplace_back(std::move(res));
+      }
+
+      size_t best_res_idx = 0;
+      double best_res_score = -1;
+      for(size_t i=0; i<x0_v.size(); ++i) {
+        FLASH_INFO() << "Using x0 = " << x0_v[i] 
+        << " maximized 1/param Score=" << res_v[i].score 
+        << " @ X=" << res_v[i].tpc_point.x << " [cm]" << std::endl;
+        if(res_v[i].score > best_res_score) {
+          best_res_idx = i;
+          best_res_score = res_v[i].score;
+        }
+      }
+      match = res_v[best_res_idx];
     }
+    else{ //one-to-many
+      //Get the best match one-to-many
+      FlashMatch_t res = OnePMTSpectrumMatch(flash);
+      //Preserve tpc and flash id
+      res.tpc_id = match.tpc_id;
+      res.flash_id = match.flash_id;
+      //Store in the match
+      match = res;
+    }
+  }
 
-    size_t best_res_idx = 0;
-    double best_res_score = -1;
-    for(size_t i=0; i<x0_v.size(); ++i) {
-      FLASH_INFO() << "Using x0 = " << x0_v[i] 
-      << " maximized 1/param Score=" << res_v[i].score 
-      << " @ X=" << res_v[i].tpc_point.x << " [cm]" << std::endl;
-      if(res_v[i].score > best_res_score) {
-        best_res_idx = i;
-        best_res_score = res_v[i].score;
+  FlashMatch_t QLLMatch::OnePMTSpectrumMatch(const Flash_t& flash){
+    
+    FlashMatch_t res;
+    res.score=-1;
+    res.num_steps = 1;
+
+    // initialize the hypothesis flash
+    Flash_t one_hypothesis;
+    one_hypothesis.pe_v.resize(DetectorSpecs::GetME().NOpDets(), 0.);
+    for (auto &v : one_hypothesis.pe_v) v = 0;
+    
+    FillEstimate(_raw_trk,one_hypothesis);
+
+    // initialize the measurement flash 
+    auto    one_measurement = flash;
+
+    for (size_t ich = 0; ich < DetectorSpecs::GetME().NOpDets(); ++ich ) {
+      if (_match_mask.at(ich) != 0){
+          one_hypothesis.pe_v[ich] = 0.;
+          one_measurement.pe_v[ich] = 0.;
       }
     }
 
-    match = res_v[best_res_idx];
+    // ** temp saturated opdets+nonlinear fix ** 
+    // - when the measured flash PE is equal to 0 and the hypothesis is large, assume that the 
+    //   measured flash PE was set to 0 due to saturation
+    if (_saturated_thresh > 0){
+      for (size_t ich = 0; ich < DetectorSpecs::GetME().NOpDets(); ++ich ) {
+        // if above the saturated threshold, measured is zero, is a PMT, and is not masked 
+        if ((one_hypothesis.pe_v[ich] >= _saturated_thresh) && (one_measurement.pe_v[ich] == 0) && (_channel_type[ich] == 0) && (_match_mask.at(ich) == 0)){
+          FLASH_WARNING() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
+          one_hypothesis.pe_v[ich] = 0;
+          continue;
+        }
+        // if above the nonlinear threshold AND a pmt AND not masked, correct for the nonlinear effect 
+        if ((one_hypothesis.pe_v[ich] > _nonlinear_thresh) && (one_measurement.pe_v[ich] != 0) && (_channel_type[ich] == 0) && (_match_mask.at(ich) == 0)){
+          double corr_pe = one_hypothesis.pe_v[ich]*_nonlinear_slope + _nonlinear_offset; 
+          one_hypothesis.pe_v[ich] = corr_pe;
+        }
+      }
+    }
+    // ** end saturated + nonlinear fix ** 
+
+    res.hypothesis = one_hypothesis.pe_v;
+    
+    if (_normalize){
+      double hsum = std::accumulate(one_hypothesis.pe_v.begin(),  one_hypothesis.pe_v.end(), 0.0);
+      double msum = std::accumulate(one_measurement.pe_v.begin(), one_measurement.pe_v.end(), 0.0);
+      if (hsum!=0) for (auto &v : one_hypothesis.pe_v) v /= hsum;
+      if (msum!=0) for (auto &v : one_measurement.pe_v) v /= msum;
+    }
+
+    // perform likelihood calculation
+    _qll = QLLMatch::GetME()->QLL(one_hypothesis, one_measurement);
+    if (std::isnan(_qll) || std::isinf(_qll)) {
+      return res;
+    }
+
+    // use the qll score 
+    if(_mode == kSimpleLLHD)
+      res.score = _qll * -1.;
+    else
+      res.score = 1. / _qll;
+
+    return res;
   }
 
 
   void QLLMatch::PESpectrumMatch(const Flash_t &flash, const double x0, FlashMatch_t& match) {
-
     match.num_steps = _num_steps;
     match.minimizer_min_x = _minimizer_min_x;
     match.minimizer_max_x = _minimizer_max_x;
@@ -233,6 +331,7 @@ namespace flashmatch {
 
     // Apply xoffset
     _var_trk.resize(_raw_trk.size());
+    //std::cout<<"_raw_trk.size() "<<_raw_trk.size()<<std::endl;
     for (size_t pt_index = 0; pt_index < _raw_trk.size(); ++pt_index) {
       //std::cout << "x point : " << _raw_trk[pt_index].x << "\t offset : " << xoffset << std::endl;
       _var_trk[pt_index].x = _raw_trk[pt_index].x + xoffset;
@@ -247,6 +346,8 @@ namespace flashmatch {
 
     //start = high_resolution_clock::now();
     FillEstimate(_var_trk, _hypothesis);
+    _var_trk.idx = _raw_trk.idx; // charge cluster index
+
     //end = high_resolution_clock::now();
     //duration = duration_cast<microseconds>(end - start);
     //std::cout << "Duration ChargeHypothesis 2 = " << duration.count() << "us" << std::endl;
@@ -261,7 +362,6 @@ namespace flashmatch {
     //end = high_resolution_clock::now();
     //duration = duration_cast<microseconds>(end - start);
     //std::cout << "Duration ChargeHypothesis 3 = " << duration.count() << "us" << std::endl;
-
     return _hypothesis;
   }
 
@@ -294,6 +394,7 @@ namespace flashmatch {
       H = hypothesis.pe_v[pmt_index];  // hypothesis
       _current_pe += H;
       if( H < 0 ) throw OpT0FinderException("Cannot have hypothesis value < 0!");
+      if (std::isnan(H)) throw OpT0FinderException("Hypothesis value is nan!");
 
       if(O < _pe_observation_threshold) ++count_observation;
       if(H < _pe_hypothesis_threshold ) ++count_hypothesis;
@@ -328,7 +429,6 @@ namespace flashmatch {
       }
 
       //_current_pe += H;
-
       if(_mode == kLLHD) {
       	assert(H>0);
       	double arg = TMath::Poisson(O,H) + epsilon;
@@ -444,6 +544,9 @@ namespace flashmatch {
   }
 
   double QLLMatch::CallMinuit(const Flash_t &pmt, const double x0) {
+    // Set the measurement and hypothesis idx
+    _measurement.idx = pmt.idx;
+    _hypothesis.idx = pmt.idx;
 
     if (_measurement.pe_v.empty()) {
       _measurement.pe_v.resize(DetectorSpecs::GetME().NOpDets(), 0.);
@@ -498,7 +601,6 @@ namespace flashmatch {
     FLASH_INFO() << "Running Minuit x: " << xmin << " => " << xmax
      << " (x buffer set at " << _minuit_x_buffer << ")"
 		 << " ... initial state x=" <<reco_x <<" x_err=" << reco_x_err << std::endl;
-
 
     if (!_minuit_ptr) _minuit_ptr = new TMinuit(4);
     double MinFval;
@@ -560,7 +662,6 @@ namespace flashmatch {
 
     if (_minuit_ptr) delete _minuit_ptr;
     _minuit_ptr = 0;
-
     return _qll;
   }
 

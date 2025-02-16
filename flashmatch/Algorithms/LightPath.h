@@ -15,7 +15,7 @@
 #define LightPath_H
 
 #ifndef USING_LARSOFT
-#define USING_LARSOFT 1
+#define USING_LARSOFT 0
 #endif
 
 #if USING_LARSOFT == 0
@@ -61,6 +61,13 @@ namespace flashmatch{
     // Flash Hypothesis for Trajectory (Track)
     flashmatch::QCluster_t MakeQCluster(const ::geoalgo::Trajectory& trj) const;
 
+    flashmatch::QCluster_t MakeQCluster(const ::geoalgo::Trajectory& trj,
+                                        const double& ADC_to_MeV) const;
+    flashmatch::QCluster_t MakeQCluster(const ::geoalgo::Trajectory& trj,
+                                     const double& ADC_to_MeV,
+                                     const double& alpha,
+                                     const double& recombination_mip) const;
+
     void MakeQCluster(const ::geoalgo::Vector& pt_1,
 		      const ::geoalgo::Vector& pt_2,
 		      flashmatch::QCluster_t& Q_cluster,
@@ -76,6 +83,7 @@ namespace flashmatch{
     double _gap;
     double _light_yield;
     double _dEdxMIP;
+    double _w_photon;
   };
 
   /**

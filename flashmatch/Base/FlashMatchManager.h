@@ -87,6 +87,18 @@ namespace flashmatch {
     /// Access to an input: PMT objects in the form of FlashArray_t
     const FlashArray_t& FlashArray() const { return _flash_v; }
 
+    /// Sets the op channels to be used for matching
+    void SetChannelMask(std::vector<int> ch_mask);
+    
+    /// Sets the TPC and Cryo numbers
+    void SetTPCCryo(int tpc, int _cryo);
+
+    /// Sets the channels sensitive to visible light
+    void SetUncoatedPMTs(std::vector<int> ch_uncoated);
+
+    /// Sets the channel types (sphere vs. rect)
+    void SetChannelType(std::vector<int> ch_type);
+
     /// Access to a full results (if configured to store) for [tpc][flash] indexing
     const std::vector<std::vector<flashmatch::FlashMatch_t> > FullResultTPCFlash() const
     { return _res_tpc_flash_v; }
@@ -94,6 +106,10 @@ namespace flashmatch {
     /// Access to a full results (if configured to store) for [flash][tpc] indexing
     const std::vector<std::vector<flashmatch::FlashMatch_t> > FullResultFlashTPC() const
     { return _res_flash_tpc_v; }
+
+    /// Access to flash hypothesis name
+    const std::string& FlashHypothesisName() const
+    { return _alg_flash_hypothesis->AlgorithmName(); }
 
   private:
 
@@ -127,6 +143,10 @@ namespace flashmatch {
     std::vector<std::vector<flashmatch::FlashMatch_t> > _res_tpc_flash_v;
     /// Full result container indexed by [flash][tpc]
     std::vector<std::vector<flashmatch::FlashMatch_t> > _res_flash_tpc_v;
+    /// TPC number where to perform the matching
+    int _tpc = 0;
+    /// Cryo number where to perform the matching
+    int _cryo = 0;
   };
 }
 

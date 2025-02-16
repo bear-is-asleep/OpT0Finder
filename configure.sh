@@ -15,9 +15,9 @@ if [[ -z $FMATCH_BUILDDIR ]]; then
 fi
 
 # Check python version compatibility:
-export FMATCH_PYTHON_CONFIG=python-config
+export FMATCH_PYTHON_CONFIG=python3-config
 FMATCH_PYVERSION=0
-export FMATCH_PYTHON=`which python`
+export FMATCH_PYTHON=python3
 if [ `command -v python` ]; then
     FMATCH_PYVERSION=$($FMATCH_PYTHON -c "import sys; print(sys.version_info.major)")
 else
@@ -93,6 +93,6 @@ fi
 
 echo
 echo "Finish configuration. To build, type:"
-echo "> make "
+echo "> make -j"
 echo
 

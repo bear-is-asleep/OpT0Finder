@@ -107,7 +107,6 @@ namespace flashmatch {
       // std::move matched info from the map to result vector
       result.push_back( match_info );
     }
-
     return result;
   }
 

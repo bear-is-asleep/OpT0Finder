@@ -73,6 +73,41 @@ namespace flashmatch {
     for(auto const& name : custom_algo_v)
       if(!name.empty()) AddCustomAlgo(CustomAlgoFactory::get().create(name,name));
 
+    // Set global configuration for semi-analytical model
+    int NOpDets = DetectorSpecs::GetME().NOpDets();
+    std::vector<int> ch_touse = mgr_cfg.get<std::vector<int> >("ChannelToUse",std::vector<int>());
+    if (ch_touse.size() == 0) {
+      FLASH_DEBUG() << "ChannelMask not provided. Using all channels." << std::endl;
+      //Make a list ranging from 0 to NOpDets
+      ch_touse.resize(NOpDets);
+      for (size_t i= 0; i <NOpDets; i++) {
+        ch_touse[i] = i;
+      }
+    }
+    this->SetChannelMask(ch_touse);
+
+    // Set channel type
+    std::vector<int> ch_type = mgr_cfg.get<std::vector<int> >("ChannelType",std::vector<int>()); 
+    if (ch_type.size() == 0) {
+      //Make a list ranging from 0 to NOpDets
+      ch_type.resize(NOpDets);
+      for (size_t i= 0; i <NOpDets; i++) {
+        ch_type[i] = 0; // 0 means sphere, 1 means rectengular (set elsewhere in semi-analytical model)
+      }
+    }
+    this->SetChannelType(ch_type);
+
+    // Set uncoated PMTs
+    std::vector<int> ch_uncoated = mgr_cfg.get<std::vector<int> >("UncoatedPMTs",std::vector<int>());
+    if (ch_uncoated.size() == 0) {
+      //Make a list ranging from 0 to NOpDets
+      ch_uncoated.resize(NOpDets);
+      for (size_t i= 0; i <NOpDets; i++) {
+        ch_uncoated[i] = 0; // 0 means coated, 1 means uncoated (this is not used yet)
+      }
+    }
+    this->SetUncoatedPMTs(ch_uncoated);
+
     // checks
 
     if (_alg_flash_filter) {
@@ -271,21 +306,28 @@ namespace flashmatch {
     // use multi-map for possible equally-scored matches
     std::vector<std::vector<FlashMatch_t> > match_result;
     match_result.resize(tpc_index_v.size());
-    for(auto& match_v : match_result) match_v.resize(flash_index_v.size());
-
+    for(auto& match_v : match_result) {
+      match_v.resize(flash_index_v.size());
+    }
+    
     // Double loop over a list of tpc object & flash
     // Call matching function to inspect the compatibility.
 
     for (size_t tpc_index = 0; tpc_index < tpc_index_v.size(); ++tpc_index) {
 
-      auto const& tpc = _tpc_object_v[tpc_index_v[tpc_index]]; // Retrieve TPC object
+      auto& tpc = _tpc_object_v[tpc_index_v[tpc_index]]; // Retrieve TPC object
+      _alg_flash_match->InitializeMask(tpc); // Initialize mask for the TPC object
 
       // Loop over flash list
       for (size_t flash_index=0; flash_index < flash_index_v.size(); ++flash_index) {
 
-        FLASH_INFO() << "TPC/Flash index " << tpc_index << "/" << flash_index
+        FLASH_DEBUG() << "TPC/Flash index " << tpc_index << "/" << flash_index
           << " ID " << tpc_index_v[tpc_index] << "/" << flash_index_v[flash_index] << std::endl;
-        auto const& flash = _flash_v[flash_index_v[flash_index]];    // Retrieve flash
+        auto& flash = _flash_v[flash_index_v[flash_index]];    // Retrieve flash
+        if (flash.pe_v.size() != DetectorSpecs::GetME().NOpDets()){
+          FLASH_CRITICAL() << "Flash size (" << flash.pe_v.size() << ") does not match the number of OpDets (" << DetectorSpecs::GetME().NOpDets() << ")" << std::endl;
+          throw OpT0FinderException();
+        }
 
         auto& match = match_result[tpc_index][flash_index];
         match.tpc_id = tpc_index_v[tpc_index];
@@ -313,10 +355,19 @@ namespace flashmatch {
           throw OpT0FinderException();
         }
         auto start = std::chrono::high_resolution_clock::now();
+        _alg_flash_hypothesis->InitializeMask(flash);
         _alg_flash_match->Match( tpc, flash, match ); // Run matching
+        if(match.tpc_id != tpc_index_v[tpc_index]){
+          FLASH_CRITICAL() << "TPC ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
+          throw OpT0FinderException();
+        }
+        if(match.flash_id != flash_index_v[flash_index]){
+          FLASH_CRITICAL() << "Flash ID changed by FlashMatch algorithm. Not supposed to happen..." << std::endl;
+          throw OpT0FinderException();
+        }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-        FLASH_INFO() << "Match duration = " << duration.count() << "ns" << std::endl;
+        FLASH_DEBUG() << "Match duration = " << duration.count() << "ns" << std::endl;
 
         match.duration = duration.count();
 
@@ -336,7 +387,6 @@ namespace flashmatch {
     }
 
     // We have a score-ordered list of match information at this point.
-
     result = _alg_match_select->Select(match_result);
 
     for(size_t idx=0; idx < result.size(); ++idx) {
@@ -344,11 +394,14 @@ namespace flashmatch {
       auto const& tpc   = _tpc_object_v[match.tpc_id];
       auto const& flash = _flash_v[match.flash_id];
 
-      FLASH_INFO() << "Match " << idx << " ... TPC " << match.tpc_id << " with PMT " << match.flash_id << std::endl
+      // Commented out lines return errors
+      FLASH_DEBUG() << "Match " << idx << " ... TPC " << match.tpc_id << " with PMT " << match.flash_id << std::endl
       << "  Match score       : " << match.score << " touch? " << match.touch_match << " (" << match.touch_score << ")" << std::endl 
       << "  X position        : true " << tpc.min_x_true << " hypo " << match.tpc_point.x << " touch " << match.touch_point.x << std::endl
       << "  Time              : true " << tpc.time_true << " flash " << flash.time << std::endl
-      << "  PEs               : true " << flash.TotalTruePE() << " hypo " << std::accumulate(match.hypothesis.begin(),match.hypothesis.end(),0.) << " flash " << flash.TotalPE() << std::endl
+      //<< "  PEs               : true " << flash.TotalTruePE() 
+      << " hypo " << std::accumulate(match.hypothesis.begin(),match.hypothesis.end(),0.) 
+      //<< " flash " << flash.TotalPE()
       << std::endl;
     }
 
@@ -356,6 +409,61 @@ namespace flashmatch {
     return result;
 
   }
+  
+  void FlashMatchManager::SetChannelMask(std::vector<int> ch_touse) {
+
+    //FIXME Set in detector config as well
+
+    //Set in upstream algorithms
+    if (!_alg_flash_hypothesis) {
+      throw OpT0FinderException("Flash hypothesis algorithm is required to set channel mask!");
+    }
+
+    _alg_flash_hypothesis->SetChannelMask(ch_touse);
+
+      if (_alg_flash_match) {
+      _alg_flash_match->SetChannelMask(ch_touse);
+    }
+  }
+
+  void FlashMatchManager::SetChannelType(std::vector<int> ch_type) {
+    
+    if (!_alg_flash_hypothesis) {
+      throw OpT0FinderException("Flash hypothesis algorithm is required to set channel types!");
+    }
+    _alg_flash_hypothesis->SetChannelType(ch_type);
+    if (_alg_flash_match) {
+      _alg_flash_match->SetChannelType(ch_type);
+    }
+  }
+
+  void FlashMatchManager::SetTPCCryo(int tpc, int cryo) {
+    _tpc = tpc;
+    _cryo = cryo;
+
+    if (_alg_flash_match) {
+      _alg_flash_match->SetTPCCryo(_tpc, _cryo);
+    }
+  }
+
+  void FlashMatchManager::SetUncoatedPMTs(std::vector<int> ch_uncoated) {
+    if (_alg_flash_hypothesis) {
+      _alg_flash_hypothesis->SetUncoatedPMTs(ch_uncoated);
+    }
+  }
+
+  // There's no chance this implementation will work with LArSoft
+  // Buutttt... it's a start to getting the two linked
+  // SBND's implementation is hopelessly tied to LArSoft and
+  // will be extremely difficult to separate
+  // left as an exercise to the reader
+  #if USING_LARSOFT == 1
+  void FlashMatchManager::SetSemiAnalyticalModel(std::unique_ptr<phot::SemiAnalyticalModel> model) {
+    if (_alg_flash_hypothesis) {
+      _alg_flash_hypothesis->SetSemiAnalyticalModel(std::move(model));
+    }
+  }
+  #endif
 
   void FlashMatchManager::PrintConfig() {
 
