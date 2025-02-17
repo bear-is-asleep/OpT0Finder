@@ -1,25 +1,25 @@
 #ifndef FLASHMATCHFHICL_CXX
 #define FLASHMATCHFHICL_CXX
 
-#include "PSet.h"
+#include "FMParams.h"
 #include <sstream>
 namespace flashmatch {
 
-  PSet::PSet(const std::string name,
+  FMParams::FMParams(const std::string name,
 	     const std::string data)
   {
     if(name.empty()) {
-      std::cerr << "Cannot make PSet with an empty name!" << std::endl;
+      std::cerr << "Cannot make FMParams with an empty name!" << std::endl;
       throw std::exception();
     }
     _name = name;
     if(!data.empty()) this->add(data);
   }
 
-  size_t PSet::size() const
+  size_t FMParams::size() const
   { return (_data_value.size() + _data_pset.size()); }
 
-  const std::vector<std::string> PSet::keys() const
+  const std::vector<std::string> FMParams::keys() const
   {
     std::vector<std::string> res;
     res.reserve(_data_value.size() + _data_pset.size());
@@ -28,14 +28,14 @@ namespace flashmatch {
     return res;
   }
   
-  const std::vector<std::string> PSet::value_keys () const
+  const std::vector<std::string> FMParams::value_keys () const
   {
     std::vector<std::string> res;
     res.reserve(_data_value.size());
     for(auto const& key_value : _data_value) res.push_back(key_value.first);
     return res;
   }
-  const std::vector<std::string> PSet::pset_keys  () const
+  const std::vector<std::string> FMParams::pset_keys  () const
   {
     std::vector<std::string> res;
     res.reserve(_data_pset.size());
@@ -43,23 +43,23 @@ namespace flashmatch {
     return res;
   }
 
-  bool PSet::contains_value (const std::string& key) const
+  bool FMParams::contains_value (const std::string& key) const
   {
     return (_data_value.find(key) != _data_value.end());
   }
-  bool PSet::contains_pset (const std::string& key) const
+  bool FMParams::contains_pset (const std::string& key) const
   {
     return (_data_pset.find(key) != _data_pset.end());
   }
 
-  void PSet::strip(std::string& str, const std::string& key)
+  void FMParams::strip(std::string& str, const std::string& key)
   {
     if(str.find(key) != 0) return;
     while(str.find(key) == 0)
       str = str.substr(key.size(),str.size());
   }
   
-  void PSet::rstrip(std::string& str, const std::string& key)
+  void FMParams::rstrip(std::string& str, const std::string& key)
   {
     size_t index = str.rfind(key);
     if(index >= str.size()) return;
@@ -70,7 +70,7 @@ namespace flashmatch {
     }
   }
 
-  void PSet::trim_space(std::string& txt){
+  void FMParams::trim_space(std::string& txt){
     strip  ( txt, " "  );
     strip  ( txt, "\t" );
     strip  ( txt, " "  );
@@ -79,7 +79,7 @@ namespace flashmatch {
     rstrip ( txt, " "  );
   }
   
-  void PSet::no_space(std::string& txt){
+  void FMParams::no_space(std::string& txt){
     trim_space(txt);
     if(txt.find(" ") < txt.size()) {
       std::stringstream ss;
@@ -92,7 +92,7 @@ namespace flashmatch {
     }
   }
 
-  std::pair<PSet::KeyChar_t,size_t> PSet::search(const std::string& txt, const size_t start) const
+  std::pair<FMParams::KeyChar_t,size_t> FMParams::search(const std::string& txt, const size_t start) const
   {
     std::pair<KeyChar_t,size_t> res(kNone,size_t(-1));
     size_t index = 0;
@@ -125,7 +125,7 @@ namespace flashmatch {
     return res;
   }
 
-  void PSet::add_value(std::string key,
+  void FMParams::add_value(std::string key,
 		       std::string value)
   {
     //std::cout<<"  "<<key<<" => "<<value<<std::endl;
@@ -145,7 +145,7 @@ namespace flashmatch {
     _data_value[key]=value;
   }
 
-  void PSet::add_pset(const PSet& p)
+  void FMParams::add_pset(const FMParams& p)
   {
     if( _data_value.find(p.name()) != _data_value.end() ||
         _data_pset.find(p.name())  != _data_pset.end() ) {
@@ -156,7 +156,7 @@ namespace flashmatch {
     _data_pset.insert(std::make_pair(p.name(),p));
   }
   
-  void PSet::add_pset(std::string key,
+  void FMParams::add_pset(std::string key,
 		      std::string value)
   {
     if( _data_value.find(key) != _data_value.end() ||
@@ -172,10 +172,10 @@ namespace flashmatch {
     }
     strip(value," ");
     rstrip(value," ");
-    _data_pset.emplace(key,PSet(key,value));
+    _data_pset.emplace(key,FMParams(key,value));
   }
   
-  void PSet::add(const std::string& contents)
+  void FMParams::add(const std::string& contents)
   {
     if(contents.size()<1) return;
     size_t index=0;
@@ -338,7 +338,7 @@ namespace flashmatch {
 
   }
   
-  std::string PSet::dump(size_t indent_size) const
+  std::string FMParams::dump(size_t indent_size) const
   {
     
     std::string res,in_indent,out_indent;
@@ -357,7 +357,7 @@ namespace flashmatch {
     return res;
   }
 
-  std::string PSet::data_string() const
+  std::string FMParams::data_string() const
   {
 
     std::string res;
@@ -374,7 +374,7 @@ namespace flashmatch {
     return res;
   }
 
-  const PSet& PSet::get_pset(const std::string& key) const
+  const FMParams& FMParams::get_pset(const std::string& key) const
   {
     auto iter = _data_pset.find(key);
     if( iter == _data_pset.end() ) {
@@ -387,7 +387,7 @@ namespace flashmatch {
   }
 
   template<>
-  PSet PSet::get<flashmatch::PSet>(const std::string& key) const
+  FMParams FMParams::get<flashmatch::FMParams>(const std::string& key) const
   { return this->get_pset(key); }
 
 }

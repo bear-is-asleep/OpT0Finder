@@ -4,16 +4,17 @@
 // #pragma statement: order matters! Google it ;)
 //
 
-#ifdef __CINT__
+#ifdef __CLING__
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class flashmatch::load_pyutil+;
+#pragma link C++ namespace flashmatch;
+#pragma link C++ class flashmatch::fmatch_load_pyutil+;
 //
 // Functions
 //
-#ifndef __CINT__
+//#ifndef __CINT__
 #pragma link C++ function flashmatch::as_ndarray(const flashmatch::QCluster_t&)+;
 #pragma link C++ function flashmatch::as_ndarray(const flashmatch::Flash_t&)+;
 #pragma link C++ function flashmatch::as_ndarray(const ::geoalgo::Trajectory&)+;
@@ -36,7 +37,7 @@
 #pragma link C++ function flashmatch::as_ndarray (const std::vector< unsigned long long >& vec)+;
 #pragma link C++ function flashmatch::as_ndarray (const std::vector< float              >& vec)+;
 #pragma link C++ function flashmatch::as_ndarray (const std::vector< double             >& vec)+;
-#endif
+//#endif
 //ADD_NEW_CLASS ... do not change this line
 
 #endif

@@ -1,9 +1,9 @@
 /**
- * \file ConfigManager.h
+ * \file FMConfigManager.h
  *
  * \ingroup Base
  * 
- * \brief Class def header for a class flashmatch::ConfigManager
+ * \brief Class def header for a class flashmatch::FMConfigManager
  *
  * @author drinkingkazu
  */
@@ -11,33 +11,33 @@
 /** \addtogroup core_Base
 
     @{*/
-#ifndef __FLASHMATCHBASE_CONFIGMANAGER_H__
-#define __FLASHMATCHBASE_CONFIGMANAGER_H__
+#ifndef __FLASHMATCHBASE_FMCONFIGMANAGER_H__
+#define __FLASHMATCHBASE_FMCONFIGMANAGER_H__
 
 #include <iostream>
-#include "PSet.h"
+#include "FMParams.h"
 #include <set>
 
 namespace flashmatch {
   /**
-     \class ConfigManager
+     \class FMConfigManager
      \brief Utility class to register a set of configurations
      Provides also a shared instance through which registered configurations can be shared beyond a single owner.\n
-     Using flashmatch::PSet, the uniqueness of configuration parameters is guaranteed (no worry to "overwrite")\n
+     Using flashmatch::FMParams, the uniqueness of configuration parameters is guaranteed (no worry to "overwrite")\n
   */
-  class ConfigManager {
+  class FMConfigManager {
     
   public:
     
     /// Default constructor
-    ConfigManager() {}
+    FMConfigManager() {}
          
     /// Default destructor
-    ~ConfigManager(){}
+    ~FMConfigManager(){}
     /// Shared static reference getter
-    static const ConfigManager& get() 
+    static const FMConfigManager& get() 
     {
-      if(!_me) _me = new ConfigManager;
+      if(!_me) _me = new FMConfigManager;
       return *_me;
     }
     /// Adder of configuration from a file
@@ -45,13 +45,13 @@ namespace flashmatch {
     /// Adder of configuration from parsed string
     void AddConfigString(const std::string cfg_str);
     /// Configuration retrieval method
-    const PSet& GetConfig(const std::string cfg);
+    const flashmatch::FMParams& GetConfig(const std::string cfg);
 
   private:
 
-    static ConfigManager* _me;
+    static FMConfigManager* _me;
     std::set<std::string> _cfg_files;
-    PSet _cfg;
+    flashmatch::FMParams _cfg;
     
   };
 }

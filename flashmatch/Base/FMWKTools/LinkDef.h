@@ -4,13 +4,13 @@
 // #pragma statement: order matters! Google it ;)
 //
 
-#ifdef __CINT__
+#ifdef __CLING__
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
 
 #pragma link C++ namespace flashmatch+;
-#pragma link C++ class flashmatch::PSet+;
+#pragma link C++ class flashmatch::FMParams+;
 /*
 #pragma link C++ function flashmatch::PSet::get< string > (const string&)+;
 #pragma link C++ function flashmatch::PSet::get< double > (const string&)+;
@@ -21,9 +21,9 @@
 #pragma link C++ function flashmatch::PSet::get< unsigned short > (const string&)+;
 #pragma link C++ function flashmatch::PSet::get< size_t > (const string&)+;
 */
-#pragma link C++ function flashmatch::ConfigFile2String(const string)+;
-#pragma link C++ function flashmatch::CreatePSetFromFile(const string)+;
-#pragma link C++ class flashmatch::ConfigManager+;
+#pragma link C++ function flashmatch::FMConfigFile2String(const string)+;
+#pragma link C++ function flashmatch::CreateFMParamsFromFile(const string)+;
+#pragma link C++ class flashmatch::FMConfigManager+;
 #pragma link C++ namespace phot+;
 #pragma link C++ namespace sim+;
 #pragma link C++ class sim::PhotonVoxel+;
