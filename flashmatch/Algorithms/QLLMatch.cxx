@@ -30,6 +30,7 @@ namespace flashmatch {
     _check_touching_track = pset.get<bool>("CheckTouchingTrack");
     _normalize = pset.get<bool>("NormalizeHypothesis");
     _mode   = (QLLMode_t)(pset.get<unsigned short>("QLLMode"));
+    _chi_error = pset.get<double>("ChiErrorWidth", 0.1);
     _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.e-6);
     _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold", 1.e-6);
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
@@ -40,10 +41,10 @@ namespace flashmatch {
 
     //Below is used in semi-analytical method
     _many_to_many             = pset.get<bool>("UseManyToMany", true);
-    _saturated_thresh = pset.get<double>("SaturatedThreshold");
-    _nonlinear_thresh = pset.get<double>("NonLinearThreshold");
-    _nonlinear_slope  = pset.get<double>("NonLinearSlope");
-    _nonlinear_offset = pset.get<double>("NonLinearOffset");
+    _saturated_thresh = pset.get<double>("SaturatedThreshold", -1);
+    _nonlinear_thresh = pset.get<double>("NonLinearThreshold", 5e3);
+    _nonlinear_slope  = pset.get<double>("NonLinearSlope", 0.75);
+    _nonlinear_offset = pset.get<double>("NonLinearOffset", 0.75e3);
     // _custom_algo              = pset.get<std::string>("CustomAlgo", "");
     // if (!_custom_algo.empty()) _alg_custom_algo = CustomAlgoFactory::get().create(_custom_algo, _custom_algo);
     // if (_alg_custom_algo) {
@@ -97,8 +98,8 @@ namespace flashmatch {
     // Inspect, in either assumption (original track is in tpc0 or tpc1), the track is contained in the whole active volume or not
     bool contained_tpc0 = reco_x_tpc0 >= _vol_xmin - tolerance && (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance; 
     bool contained_tpc1 = reco_x_tpc1 >= _vol_xmin - tolerance && (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) <= _vol_xmax + tolerance;
-    FLASH_DEBUG() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
-    FLASH_DEBUG() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
+    FLASH_INFO() << " tpc0 " << reco_x_tpc0 << " " << (reco_x_tpc0 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc0 << std::endl;
+    FLASH_INFO() << " tpc1 " << reco_x_tpc1 << " " << (reco_x_tpc1 + _raw_xmax_pt.x - _raw_xmin_pt.x) << " contained? " << contained_tpc1 << std::endl;
     if (contained_tpc0 && reco_x_tpc0 > _vol_xmin) {
       x0_v.push_back(std::max(reco_x_tpc0, _vol_xmin + _offset));
     }
@@ -133,7 +134,7 @@ namespace flashmatch {
 
     _raw_trk.tpc_mask_v = _match_mask;
     // End of removing ^^
-    FLASH_DEBUG() << "Starting a match... "
+    FLASH_INFO() << "Starting a match... "
     << "MC info: tpc true time " << pt_v.time_true 
     << " Flash true time " << flash.time_true << std::endl;    
     //
@@ -489,10 +490,12 @@ namespace flashmatch {
 
       } else if (_mode == kChi2) {
 
-      	Error = O;
-      	if( Error < 1.0 ) Error = 1.0;
-      	_current_chi2 += std::pow((O - H), 2) / (Error);
-      	nvalid_pmt += 1;
+      	// Error = O;
+        Error = H;
+        // if( Error < 1.0 ) Error = 1.0;
+        _current_chi2 += std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2));
+        //if(!(O==_pe_observation_threshold && H == _pe_hypothesis_threshold)) std::cout <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << std::pow((O - H), 2) / (Error + std::pow(0.1*Error,2)) << std::endl;
+        nvalid_pmt += 1;
 
       } else {
       	FLASH_ERROR() << "Unexpected mode" << std::endl;
@@ -625,6 +628,7 @@ namespace flashmatch {
     arglist[0] = 5000;  // maxcalls
     arglist[1] = _migrad_tolerance; // tolerance*1e-3 = convergence condition
     _minuit_ptr->mnexcm("MIGRAD", arglist, 2, ierrflag);
+
 
     _converged = true;
 

@@ -120,6 +120,7 @@ namespace flashmatch {
     QLLMode_t _mode;   ///< Minimizer mode
     bool _record;      ///< Boolean switch to record minimizer history
     double _normalize; ///< Noramalize hypothesis PE spectrum
+    double _chi_error; ///< width of an additional uncertainty to add to Chi2 method 
     bool _check_touching_track; ///< Whether to match immediately touching track with flash if timing coincides.
     double _touching_track_window; ///< Time(us) such that we use this tolerance T to find touching tracks
 

@@ -17,6 +17,14 @@ namespace flashmatch {
     _score_min_threshold = pset.get<double>("FlashScoreMinThreshold",0.);
     _score_max_ceiling = pset.get<double>("FlashScoreMaxCeiling",1.0);
     _allow_reuse_flash = pset.get<bool>("AllowReuseFlash",false);
+    _invert_score = pset.get<bool>("InvertScore",true);
+
+    std::cout << "SelectionGreedy::_Configure_() called" << std::endl;
+    std::cout << "TouchMatchMaxThreshold: " << _score_max_threshold << std::endl;
+    std::cout << "FlashScoreMinThreshold: " << _score_min_threshold << std::endl;
+    std::cout << "FlashScoreMaxCeiling: " << _score_max_ceiling << std::endl;
+    std::cout << "AllowReuseFlash: " << _allow_reuse_flash << std::endl;
+    std::cout << "InvertScore: " << _invert_score << std::endl;
   }
 
   std::vector<FlashMatch_t> SelectionGreedy::Select(const std::vector<std::vector<FlashMatch_t> >& match_data)
@@ -75,9 +83,14 @@ namespace flashmatch {
     // Step 2.1 register matches with a flash-match score (inverse in order to use multimap)
     for(auto const& match_v : match_data) {
       for(auto const& match : match_v) {
+        FLASH_DEBUG() << "match.score: " << match.score 
+        << " match.tpc_id: " << match.tpc_id
+        << " match.flash_id: " << match.flash_id
+        << std::endl;
         if(match.score < _score_min_threshold) continue;
         double score = std::min(match.score, _score_max_ceiling);
-        score_map.insert(std::make_pair(1./(score - _score_min_threshold) ,match));
+        if(_invert_score) score = 1./(score - _score_min_threshold);
+        score_map.insert(std::make_pair(score ,match));
       }
     }
 

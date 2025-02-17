@@ -56,6 +56,7 @@ namespace flashmatch {
     double _score_max_threshold;  ///< ignore touch-matched pairs with a score larger than this threshold
     double _score_min_threshold;  ///< ignore flash-matched pairs with a score less than this threshold
     double _score_max_ceiling;    ///< treat matched pairs with score values higher than this ceiling same (reset to this value)
+    bool   _invert_score;         ///< invert the score when selecting the best match
   };
 
   /**
