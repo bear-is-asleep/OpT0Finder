@@ -1,9 +1,9 @@
 /**
- * \file PSet.h
+ * \file FMParams.h
  *
  * \ingroup Base
  * 
- * \brief Class def header for a class flashmatch::PSet
+ * \brief Class def header for a class flashmatch::FMParams
  *
  * @author kazuhiro
  */
@@ -11,31 +11,30 @@
 /** \addtogroup core_Base
 
     @{*/
-#ifndef __CVFHICL_PSET_H__
-#define __CVFHICL_PSET_H__
-
+#ifndef __CVFHICL_FMPARAMS_H__
+#define __CVFHICL_FMPARAMS_H__
 #include <iostream>
 #include <string>
 #include <map>
 #include "Parser.h"
 namespace flashmatch {
   /**
-     \class PSet
+     \class FMParams
      \brief A nested configuration parameter set holder for flashmatch framework.
   */
-  class PSet {
+  class FMParams {
     
   public:
     
     /// Default constructor
-    PSet(const std::string name="",
+    FMParams(const std::string name="",
 	 const std::string data="");
 
     /// Default destructor
-    virtual ~PSet(){};
+    virtual ~FMParams(){};
 
     /// Copy ctor
-    PSet(const PSet& orig) : _name       ( orig._name       )
+    FMParams(const FMParams& orig) : _name       ( orig._name       )
 			   , _data_value ( orig._data_value )
 			   , _data_pset  ( orig._data_pset  )
     {}
@@ -44,7 +43,7 @@ namespace flashmatch {
     inline const std::string& name() const { return _name; }
     
     /// operator override
-    inline bool operator==(const PSet& rhs) const
+    inline bool operator==(const FMParams& rhs) const
     {
       if(_name != rhs.name()) return false;
       auto const v_keys = this->value_keys();
@@ -66,7 +65,7 @@ namespace flashmatch {
       return true;
     }
 
-    inline bool operator!=(const PSet& rhs) const
+    inline bool operator!=(const FMParams& rhs) const
     { return !((*this) == rhs); }
 
     /// rename method
@@ -82,12 +81,12 @@ namespace flashmatch {
     /// Insert method for a simple param
     void add_value(std::string key, std::string value);
 
-    /// Insert method for a PSet rep
-    void add_pset(const PSet& p);
+    /// Insert method for a FMParams rep
+    void add_pset(const FMParams& p);
 
-    /// Insert method for a PSet rep
+    /// Insert method for a FMParams rep
     void add_pset(std::string key,
-		  std::string pset);
+		  std::string FMParams);
     
     /// Dump into a text format
     std::string dump(size_t indent_size=0) const;
@@ -119,7 +118,7 @@ namespace flashmatch {
     }
 
     /// None-template function to retrieve parameter set (deprecated)
-    const PSet& get_pset(const std::string& key) const;
+    const FMParams& get_pset(const std::string& key) const;
 
     /// Returns # of parameters
     size_t size() const;
@@ -127,11 +126,11 @@ namespace flashmatch {
     const std::vector<std::string> keys() const;
     /// Returns a vector of keys for key-value pairs
     const std::vector<std::string> value_keys () const;
-    /// Returns a vector of keys for key-PSet pairs
+    /// Returns a vector of keys for key-FMParams pairs
     const std::vector<std::string> pset_keys  () const;
     /// Check if a specified key exists for key-value pairs
     bool  contains_value (const std::string& key) const;
-    /// Check if a specified key exists for key-PSet pairs
+    /// Check if a specified key exists for key-FMParams pairs
     bool  contains_pset  (const std::string& key) const;
 
 
@@ -146,22 +145,22 @@ namespace flashmatch {
       kNone
     };
 
-    std::pair<PSet::KeyChar_t,size_t> search(const std::string& txt, const size_t start) const;
+    std::pair<FMParams::KeyChar_t,size_t> search(const std::string& txt, const size_t start) const;
     void strip(std::string& str, const std::string& key);
     void rstrip(std::string& str, const std::string& key);
     void trim_space(std::string& txt);
     void no_space(std::string& txt);
 
-    /// The name of this flashmatch::PSet
+    /// The name of this flashmatch::FMParams
     std::string _name;
     /// Key-Value pairs
     std::map<std::string,std::string> _data_value;
-    /// Key-PSet pairs
-    std::map<std::string,::flashmatch::PSet> _data_pset;
+    /// Key-FMParams pairs
+    std::map<std::string,::flashmatch::FMParams> _data_pset;
 
   };
 
-  template<> PSet PSet::get<flashmatch::PSet>(const std::string& key) const;
+  template<> FMParams FMParams::get<flashmatch::FMParams>(const std::string& key) const;
   
 }
 

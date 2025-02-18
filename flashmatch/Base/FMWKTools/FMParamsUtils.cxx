@@ -1,12 +1,12 @@
-#ifndef __PSET_UTILS_CXX__
-#define __PSET_UTILS_CXX__
+#ifndef __FMPARAMS_UTILS_CXX__
+#define __FMPARAMS_UTILS_CXX__
 
-#include "PSetUtils.h"
+#include "FMParamsUtils.h"
 #include <sstream>
 #include <fstream>
 namespace flashmatch {
 
-  std::string ConfigFile2String(std::string fname)
+  std::string FMConfigFile2String(std::string fname)
   {
     std::ifstream filestrm(fname.c_str());
     std::string   contents;
@@ -29,9 +29,9 @@ namespace flashmatch {
     return contents;
   }
 
-  PSet CreatePSetFromFile(std::string fname,std::string cfg_name)
+  FMParams CreateFMParamsFromFile(std::string fname,std::string cfg_name)
   {
-    PSet res(cfg_name,ConfigFile2String(fname));
+    FMParams res(cfg_name,FMConfigFile2String(fname));
     return res;
   }
 

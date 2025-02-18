@@ -1,7 +1,7 @@
 #ifndef __FLASHMATCHBASE_PARSER_CXX__
 #define __FLASHMATCHBASE_PARSER_CXX__
 
-#include "PSetUtils.h"
+#include "FMParamsUtils.h"
 namespace flashmatch {
   namespace parser{
     

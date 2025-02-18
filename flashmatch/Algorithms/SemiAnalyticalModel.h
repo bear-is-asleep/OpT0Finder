@@ -41,7 +41,7 @@
 //#include "counter.h"
 namespace flashmatch {
   /// Configuration object
-  using Config_t = flashmatch::PSet;
+  using Config_t = flashmatch::FMParams;
 }
 #else
 //Config
