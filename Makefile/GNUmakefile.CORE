@@ -17,7 +17,7 @@ ifdef HEADERS_DEST
 $(shell mkdir -p $(PACKAGE_INCDIR))
 endif
 
-DICT    = $(PACKAGE_BUILDDIR)/$(PACKAGE_NAME)Dict
+DICT    = $(PACKAGE_BUILDDIR)/FlashMatch$(PACKAGE_NAME)Dict
 OBJECTS = $(addprefix $(PACKAGE_BUILDDIR)/, $(SOURCES:.cxx=.o))
 
 all: pre_build main_build pkg_build
@@ -31,7 +31,7 @@ $(PACKAGE_BUILDDIR)/%.o: %.cxx %.h
 	@echo '<< compiling' $< '>>'
 	@$(CXX) $(CXXFLAGS) $(FMATCH_BASIC_ROOTINC) $(INCFLAGS) -DFMATCH_NUMPY=$(FMATCH_NUMPY) -DUSING_LARSOFT=0 -c $< -o $@
 $(DICT).o: $(DICT).cxx
-	@echo '<< compiling' $(PACKAGE_NAME)Dict.cxx '>>'
+	@echo '<< compiling' $(DICT).cxx '>>'
 	@$(CXX) $(CXXFLAGS) $(FMATCH_BASIC_ROOTINC) $(INCFLAGS) -DUSING_LARSOFT=0 -c $< -o $@
 
 # root class dictionary
