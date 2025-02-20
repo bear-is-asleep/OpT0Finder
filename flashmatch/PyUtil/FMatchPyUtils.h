@@ -1,5 +1,5 @@
-#ifndef __OPT0FINDER_PYUTILS_H__
-#define __OPT0FINDER_PYUTILS_H__
+#ifndef __FMATCHPYUTILS_H__
+#define __FMATCHPYUTILS_H__
 
 struct _object;
 typedef _object PyObject;
@@ -13,7 +13,7 @@ typedef _object PyObject;
 #include "flashmatch/GeoAlgo/GeoTrajectory.h"
 namespace flashmatch {
   /// Utility function: call one-time-only numpy module initialization (you don't have to call)
-  void SetPyUtil();
+  void SetFMatchPyUtil();
 
   ::geoalgo::Trajectory as_geoalgo_trajectory(PyObject* pyarray);
   PyObject* as_ndarray(const QCluster_t& traj);

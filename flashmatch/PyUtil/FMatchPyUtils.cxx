@@ -1,7 +1,7 @@
-#ifndef __OPT0FINDER_PYUTILS_CXX__
-#define __OPT0FINDER_PYUTILS_CXX__
+#ifndef __FMATCHPYUTILS_CXX__
+#define __FMATCHPYUTILS_CXX__
 
-#include "PyUtils.h"
+#include "FMatchPyUtils.h"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 //#include <numpy/ndarrayobject.h>
 #include "numpy/arrayobject.h"
@@ -11,7 +11,7 @@
 
 namespace flashmatch {
 
-  void SetPyUtil() {
+  void SetFMatchPyUtil() {
     static bool once = false;
     if (!once) {
       _import_array();
@@ -20,7 +20,7 @@ namespace flashmatch {
   }
 
   geoalgo::Trajectory as_geoalgo_trajectory(PyObject* pyarray) {
-    ::flashmatch::SetPyUtil();
+    ::flashmatch::SetFMatchPyUtil();
     double **carray;
     const int dtype = NPY_DOUBLE;
     PyArray_Descr *descr = PyArray_DescrFromType(dtype);
@@ -39,7 +39,7 @@ namespace flashmatch {
   }  
 
   PyObject* as_ndarray(const QCluster_t& traj) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     std::vector<size_t> dims(2,0);
     dims[0] = traj.size();
     dims[1] = 4;
@@ -66,7 +66,7 @@ namespace flashmatch {
   }
 
   PyObject* as_ndarray(const ::geoalgo::Trajectory& traj) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     std::vector<size_t> dims(2,0);
     dims[0] = traj.size();
     dims[1] = 3;
@@ -92,7 +92,7 @@ namespace flashmatch {
   }
 
   PyObject* as_ndarray(const Flash_t& flash) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     std::vector<size_t> dims(1);
     dims[0] = flash.pe_v.size();
     auto pyarray = numpy_array<double>(dims);
@@ -115,7 +115,7 @@ namespace flashmatch {
 
   /*
     void copy_array(PyObject *arrayin, const std::vector<float> &cvec) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     PyArrayObject *ptr = (PyArrayObject *)(arrayin);
     
     //std::cout<< PyArray_NDIM(ptr) << std::endl
@@ -141,7 +141,7 @@ namespace flashmatch {
   
   template<class T>
   void _copy_array(PyObject *arrayin, const std::vector<T> &cvec) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     PyArrayObject *ptr = (PyArrayObject *)(arrayin);
     
     //std::cout<< PyArray_NDIM(ptr) << std::endl
@@ -180,18 +180,18 @@ namespace flashmatch {
   void copy_array(PyObject *arrayin, const std::vector< float          > &cvec) { _copy_array(arrayin, cvec); }
   void copy_array(PyObject *arrayin, const std::vector< double         > &cvec) { _copy_array(arrayin, cvec); }
   
-  template<> int ctype_to_numpy<short>() { SetPyUtil(); SetPyUtil(); return NPY_INT16; }
-  template<> int ctype_to_numpy<unsigned short>() { SetPyUtil(); return NPY_UINT16; }
-  template<> int ctype_to_numpy<int>() { SetPyUtil(); return NPY_INT32; }
-  template<> int ctype_to_numpy<unsigned int>() { SetPyUtil(); return NPY_UINT32; }
-  template<> int ctype_to_numpy<long long>() { SetPyUtil(); return NPY_INT64; }
-  template<> int ctype_to_numpy<unsigned long long>() { SetPyUtil(); return NPY_UINT64; }
-  template<> int ctype_to_numpy<float>() { SetPyUtil(); return NPY_FLOAT32; }
-  template<> int ctype_to_numpy<double>() { SetPyUtil(); return NPY_FLOAT64; }
+  template<> int ctype_to_numpy<short>() { SetFMatchPyUtil(); SetFMatchPyUtil(); return NPY_INT16; }
+  template<> int ctype_to_numpy<unsigned short>() { SetFMatchPyUtil(); return NPY_UINT16; }
+  template<> int ctype_to_numpy<int>() { SetFMatchPyUtil(); return NPY_INT32; }
+  template<> int ctype_to_numpy<unsigned int>() { SetFMatchPyUtil(); return NPY_UINT32; }
+  template<> int ctype_to_numpy<long long>() { SetFMatchPyUtil(); return NPY_INT64; }
+  template<> int ctype_to_numpy<unsigned long long>() { SetFMatchPyUtil(); return NPY_UINT64; }
+  template<> int ctype_to_numpy<float>() { SetFMatchPyUtil(); return NPY_FLOAT32; }
+  template<> int ctype_to_numpy<double>() { SetFMatchPyUtil(); return NPY_FLOAT64; }
   
   /*
     PyObject *as_ndarray(const std::vector<float> &vec) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     
     if (vec.size() >= INT_MAX) {
     LARCV_CRITICAL() << "Length of data vector too long to specify ndarray. "
@@ -210,7 +210,7 @@ namespace flashmatch {
   
   template <class T>
   PyObject *_as_ndarray(const std::vector<T> &vec) {
-    SetPyUtil();
+    SetFMatchPyUtil();
     
     if (vec.size() >= INT_MAX) {
       std::cerr << "Length of data vector too long to specify ndarray. " << std::endl;
@@ -245,7 +245,7 @@ namespace flashmatch {
   template<class T>
   PyObject* numpy_array(std::vector<size_t> dims)
   {
-    SetPyUtil();
+    SetFMatchPyUtil();
     int nd_ = dims.size();
     npy_intp dims_[nd_];
     for(size_t i=0; i<dims.size(); ++i) dims_[i] = dims[i];
