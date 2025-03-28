@@ -223,7 +223,7 @@ namespace flashmatch {
       for (size_t ich = 0; ich < DetectorSpecs::GetME().NOpDets(); ++ich ) {
         // if above the saturated threshold, measured is zero, is a PMT, and is not masked 
         if ((one_hypothesis.pe_v[ich] >= _saturated_thresh) && (one_measurement.pe_v[ich] == 0) && (_channel_type[ich] == 0) && (_match_mask.at(ich) == 0)){
-          FLASH_WARNING() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
+          FLASH_DEBUG() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
           one_hypothesis.pe_v[ich] = 0;
           continue;
         }
