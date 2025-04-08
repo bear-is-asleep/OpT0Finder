@@ -128,6 +128,7 @@ namespace flashmatch {
     std::vector<double>  _penalty_value_v;
     double _pe_hypothesis_threshold;
     double _pe_observation_threshold;
+    double _pe_observation_threshold_scaled; ///< Scaled observation threshold, happens when normalizing the hypothesis and measurement
 
     flashmatch::QCluster_t _raw_trk;
     QPoint_t _raw_xmin_pt;

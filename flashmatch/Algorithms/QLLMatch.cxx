@@ -31,8 +31,9 @@ namespace flashmatch {
     _normalize = pset.get<bool>("NormalizeHypothesis");
     _mode   = (QLLMode_t)(pset.get<unsigned short>("QLLMode"));
     _chi_error = pset.get<double>("ChiErrorWidth", 0.1);
-    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.e-6);
+    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.); // We use 1.0 PE as the threshold, so if anything is below this, it is set to 0. This is to avoid divergences in the likelihood function.
     _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold", 1.e-6);
+    _pe_observation_threshold_scaled = _pe_observation_threshold;
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
     _offset                   = pset.get<double>("Offset", 0.0);
 		_time_shift               = pset.get<double>("BeamTimeShift", 0.0);
@@ -194,7 +195,7 @@ namespace flashmatch {
   }
 
   FlashMatch_t QLLMatch::OnePMTSpectrumMatch(const Flash_t& flash){
-    
+    _converged = true; // This states that we are just going to use the x0 from the TPC. Use many-to-many to do the full fit of possible x0s.
     FlashMatch_t res;
     res.score=-1;
     res.num_steps = 1;
@@ -223,7 +224,7 @@ namespace flashmatch {
       for (size_t ich = 0; ich < DetectorSpecs::GetME().NOpDets(); ++ich ) {
         // if above the saturated threshold, measured is zero, is a PMT, and is not masked 
         if ((one_hypothesis.pe_v[ich] >= _saturated_thresh) && (one_measurement.pe_v[ich] == 0) && (_channel_type[ich] == 0) && (_match_mask.at(ich) == 0)){
-          FLASH_WARNING() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
+          FLASH_DEBUG() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
           one_hypothesis.pe_v[ich] = 0;
           continue;
         }
@@ -237,8 +238,15 @@ namespace flashmatch {
     // ** end saturated + nonlinear fix ** 
 
     res.hypothesis = one_hypothesis.pe_v;
+
     
     if (_normalize){
+      // Scale the pe normalization factor if normalizing the flashes and hypothesis
+      FLASH_DEBUG() << "Scaling observation threshold by " << 1/one_measurement.TotalPE() << std::endl;
+      _pe_observation_threshold_scaled = _pe_observation_threshold / one_measurement.TotalPE();
+      FLASH_DEBUG() << "New observation threshold: " << _pe_observation_threshold_scaled << std::endl;
+      // FLASH_DEBUG() << "Scaling hypothesis threshold by " << 1/_hypothesis.TotalPE() << std::endl;
+      //_pe_hypothesis_threshold /= _hypothesis.TotalPE();
       double hsum = std::accumulate(one_hypothesis.pe_v.begin(),  one_hypothesis.pe_v.end(), 0.0);
       double msum = std::accumulate(one_measurement.pe_v.begin(), one_measurement.pe_v.end(), 0.0);
       if (hsum!=0) for (auto &v : one_hypothesis.pe_v) v /= hsum;
@@ -382,6 +390,7 @@ namespace flashmatch {
     for(size_t i=0; i<_exp_frac_v.size(); ++i) {
       integral_factor += _exp_frac_v[i] * (1 - exp(-1 * measurement.time_width / _exp_tau_v[i]));
     }
+    FLASH_INFO() << "Integral factor: " << integral_factor << std::endl;
     assert(integral_factor > 0);
 
     double O, H, Error;
@@ -397,25 +406,33 @@ namespace flashmatch {
       if( H < 0 ) throw OpT0FinderException("Cannot have hypothesis value < 0!");
       if (std::isnan(H)) throw OpT0FinderException("Hypothesis value is nan!");
 
-      if(O < _pe_observation_threshold) ++count_observation;
+      if(O < _pe_observation_threshold_scaled) ++count_observation;
       if(H < _pe_hypothesis_threshold ) ++count_hypothesis;
     }
     FLASH_DEBUG() << count_observation << " (Reco) v.s. " << count_hypothesis << " (Hypothesis) PMTs below PE threshold " << std::endl;
+    for (size_t i = 0; i < measurement.pe_v.size(); ++i) {
+      if (measurement.pe_v[i] > 0) {
+        FLASH_DEBUG() << "Measurement PE: " << i << " " << measurement.pe_v[i] << std::endl;
+      }
+    }
 
     for (size_t pmt_index = 0; pmt_index < hypothesis.pe_v.size(); ++pmt_index) {
 
+      // Skip if the PMT is not masked (it should be used)
+      if (_channel_mask[pmt_index] == 0) continue;
+      
       O = measurement.pe_v[pmt_index] / integral_factor; // observation
       H = hypothesis.pe_v[pmt_index];  // hypothesis
 
       if( H < 0 ) throw OpT0FinderException("Cannot have hypothesis value < 0!");
 
       // O(bservation) must be above threshold if set
-      if(O < _pe_observation_threshold) {
+      if(O < _pe_observation_threshold_scaled) {
         if (!_penalty_value_v.empty()) {
           O = _penalty_value_v[pmt_index];
         }
         else {
-          O = _pe_observation_threshold;
+          O = _pe_observation_threshold_scaled;
         }
       }
 
@@ -450,7 +467,7 @@ namespace flashmatch {
       }
       else if(_mode == kZIP) {
         double pzero = H > _pe_hypothesis_threshold ? 0. : 1.;
-        double arg = O > _pe_observation_threshold ? (TMath::Poisson(O,H) * (1-pzero) + epsilon) : (pzero + (1 - pzero)*TMath::Exp(-H) + epsilon);
+        double arg = O > _pe_observation_threshold_scaled ? (TMath::Poisson(O,H) * (1-pzero) + epsilon) : (pzero + (1 - pzero)*TMath::Exp(-H) + epsilon);
         if(!std::isnan(arg) && !std::isinf(arg)) {
             _current_llhd -= std::log10(arg);
             nvalid_pmt += 1;
@@ -490,11 +507,13 @@ namespace flashmatch {
 
       } else if (_mode == kChi2) {
 
-      	// Error = O;
-        Error = H;
-        // if( Error < 1.0 ) Error = 1.0;
-        _current_chi2 += std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2));
-        //if(!(O==_pe_observation_threshold && H == _pe_hypothesis_threshold)) std::cout <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << std::pow((O - H), 2) / (Error + std::pow(0.1*Error,2)) << std::endl;
+      	Error = O;
+        //Error = (std::pow(H*_chi_error,2)+O);
+        if( Error < 1.0 ) Error = 1.0;
+        //double chi2 = std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2));
+        double chi2 = std::pow((O - H), 2) / (Error);
+        _current_chi2 += chi2;
+        if(!(O==_pe_observation_threshold_scaled && H == _pe_hypothesis_threshold)) FLASH_DEBUG() <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2)) << std::endl;
         nvalid_pmt += 1;
 
       } else {
@@ -508,6 +527,7 @@ namespace flashmatch {
 
     if(_converged)
       FLASH_INFO() << "Combined LLHD: " << _current_llhd << " (divided by nvalid_pmt+1 = " << nvalid_pmt+1<<")"<<std::endl;
+      FLASH_INFO() << "Combined Chi2: " << _current_chi2 << " (divided by nvalid_pmt = " << nvalid_pmt<<")"<<std::endl;
 
     return (_mode == kChi2 ? _current_chi2 : _current_llhd);
   }

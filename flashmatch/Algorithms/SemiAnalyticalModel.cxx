@@ -228,6 +228,9 @@ namespace flashmatch{
       // Fill Estimate with Direct light
       //
       for (size_t op_det=0; op_det<direct_visibilities.size(); ++op_det) {
+        if (_channel_mask[op_det] == false) {
+          continue;
+        }
         const double visibility = direct_visibilities[op_det];
 
         double q = n_original_photons * visibility * _global_qe * _qe_v[op_det];
@@ -244,6 +247,9 @@ namespace flashmatch{
       // Fill Estimate with Reflected light
       //
       for (size_t op_det=0; op_det<reflected_visibilities.size(); ++op_det) {
+        if (_channel_mask[op_det] == false) {
+          continue;
+        }
         const double visibility = reflected_visibilities[op_det];
         double q = n_original_photons * visibility * _global_qe_refl * _qe_refl_v[op_det];
 
@@ -274,7 +280,7 @@ namespace flashmatch{
     // }
     
     // Print outs to check validity of filling the flashes
-    FLASH_DEBUG() << "Filled flash with " << _channel_mask.size() << " PMTs ... " 
+    FLASH_INFO() << "Filled flash with " << _channel_mask.size() << " PMTs ... " 
     << " Valid: " << flash.Valid(fNOpDets) << " Total PE: " << flash.TotalPE() 
     << " trk.size(): " << trk.size()
     << "Flash [x,y,z] -> [Total PE] : [" << flash.x << ", " << flash.y << ", " << flash.z << "] -> [" << flash.TotalPE() << "]"
@@ -288,6 +294,11 @@ namespace flashmatch{
       << " flash.pe_err_v.size() " << flash.pe_err_v.size()
       << " flash.idx " << flash.idx << std::endl;
       throw OpT0FinderException();
+    }
+    for (size_t op_det=0; op_det<flash.pe_v.size(); ++op_det) {
+      if (flash.pe_v[op_det] > 0) {
+        FLASH_DEBUG()<<"op_det: "<<op_det<<" pe_v: "<<flash.pe_v[op_det]<<std::endl;
+      }
     }
 
   }
