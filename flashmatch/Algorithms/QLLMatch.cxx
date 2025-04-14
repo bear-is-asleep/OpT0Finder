@@ -390,7 +390,7 @@ namespace flashmatch {
     for(size_t i=0; i<_exp_frac_v.size(); ++i) {
       integral_factor += _exp_frac_v[i] * (1 - exp(-1 * measurement.time_width / _exp_tau_v[i]));
     }
-    FLASH_INFO() << "Integral factor: " << integral_factor << std::endl;
+    FLASH_DEBU() << "Integral factor: " << integral_factor << std::endl;
     assert(integral_factor > 0);
 
     double O, H, Error;
