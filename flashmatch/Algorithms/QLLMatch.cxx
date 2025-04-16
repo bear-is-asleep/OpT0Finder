@@ -522,7 +522,6 @@ namespace flashmatch {
         //double chi2 = std::pow((O - H), 2) / (Error + std::pow(_chi_error*Error,2));
         double chi2 = std::pow((O - H), 2) / (Error);
         _current_chi2 += chi2;
-        //if(!(O==_pe_observation_threshold_scaled && H == _pe_hypothesis_threshold)) 
         FLASH_DEBUG() <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << chi2 << std::endl;
         nvalid_pmt += 1;
 
