@@ -249,8 +249,6 @@ namespace flashmatch {
 
     
     if (_normalize){
-      // FLASH_DEBUG() << "Scaling hypothesis threshold by " << 1/_hypothesis.TotalPE() << std::endl;
-      //_pe_hypothesis_threshold /= _hypothesis.TotalPE();
       double hsum = std::accumulate(one_hypothesis.pe_v.begin(),  one_hypothesis.pe_v.end(), 0.0);
       double msum = std::accumulate(one_measurement.pe_v.begin(), one_measurement.pe_v.end(), 0.0);
       if (hsum!=0) for (auto &v : one_hypothesis.pe_v) v /= hsum;
