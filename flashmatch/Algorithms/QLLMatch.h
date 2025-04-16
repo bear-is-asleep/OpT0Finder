@@ -44,7 +44,7 @@ namespace flashmatch {
 
   public:
 
-    enum QLLMode_t { kChi2, kLLHD, kSimpleLLHD, kWeightedLLHD, kIntegralLLHD, kZIP, kPEWeightedLLHD };
+    enum QLLMode_t { kChi2, kLLHD, kSimpleLLHD, kWeightedLLHD, kIntegralLLHD, kZIP, kPEWeightedLLHD, kGStat };
 
   private:
     /// Valid ctor hidden (singleton)

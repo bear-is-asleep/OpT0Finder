@@ -81,7 +81,7 @@ namespace flashmatch {
       //Make a list ranging from 0 to NOpDets
       ch_touse.resize(NOpDets);
       for (size_t i= 0; i <NOpDets; i++) {
-        ch_touse[i] = i;
+        ch_touse[i] = true;
       }
     }
     this->SetChannelMask(ch_touse);
@@ -413,6 +413,9 @@ namespace flashmatch {
   void FlashMatchManager::SetChannelMask(std::vector<int> ch_touse) {
 
     //FIXME Set in detector config as well
+    for (size_t i = 0; i < ch_touse.size(); ++i) {
+      FLASH_DEBUG() << "Setting channel mask: " << ch_touse[i] << " to true" << std::endl;
+    }
 
     //Set in upstream algorithms
     if (!_alg_flash_hypothesis) {
@@ -421,7 +424,8 @@ namespace flashmatch {
 
     _alg_flash_hypothesis->SetChannelMask(ch_touse);
 
-      if (_alg_flash_match) {
+    if (_alg_flash_match) {
+      FLASH_DEBUG() << "Setting channel mask: " << std::endl;
       _alg_flash_match->SetChannelMask(ch_touse);
     }
   }

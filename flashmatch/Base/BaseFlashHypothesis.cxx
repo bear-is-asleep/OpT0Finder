@@ -20,7 +20,7 @@ namespace flashmatch {
     _global_qe_refl = pset.get<double>("GlobalQERefl", -1);
 
     // This is meant to be a list of channel ids to use
-    _chs_to_use = pset.get<std::vector<int> >("ChannelsToUse",_chs_to_use);
+    _chs_to_use = pset.get<std::vector<int> >("ChannelToUse",_chs_to_use);
     if(!_chs_to_use.empty()) {
       this->SetChannelMask(_chs_to_use); // This will set the channel mask based on the channel ids
     }
