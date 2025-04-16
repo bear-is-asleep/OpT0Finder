@@ -425,7 +425,6 @@ namespace flashmatch {
     _alg_flash_hypothesis->SetChannelMask(ch_touse);
 
     if (_alg_flash_match) {
-      FLASH_DEBUG() << "Setting channel mask: " << std::endl;
       _alg_flash_match->SetChannelMask(ch_touse);
     }
   }
