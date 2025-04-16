@@ -31,7 +31,7 @@ namespace flashmatch {
     _normalize = pset.get<bool>("NormalizeHypothesis");
     _mode   = (QLLMode_t)(pset.get<unsigned short>("QLLMode"));
     _chi_error = pset.get<double>("ChiErrorWidth", 0.1);
-    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.); // We use 1.0 PE as the threshold, so if anything is below this, it is set to 0. This is to avoid divergences in the likelihood function.
+    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.); // This is to avoid divergences in the likelihood function. Asserts a lower bound on the statistical uncertainty in PE.
     _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold", 1.e-6);
     _pe_observation_threshold_scaled = _pe_observation_threshold;
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
