@@ -266,8 +266,6 @@ namespace flashmatch {
       double msum = std::accumulate(one_measurement.pe_v.begin(), one_measurement.pe_v.end(), 0.0);
       if (hsum!=0) for (auto &v : one_hypothesis.pe_v) v /= hsum;
       if (msum!=0) for (auto &v : one_measurement.pe_v) v /= msum;
-      _msum = msum; // store the sum of PE in the measurement before any normalization
-      _hsum = hsum; // store the sum of PE in the hypothesis before any normalization
       // Scale the pe normalization factor if normalizing the flashes and hypothesis
       FLASH_DEBUG() << "Scaling observation threshold by " << 1/msum << std::endl;
       if (msum!=0) _pe_observation_threshold_scaled = _pe_observation_threshold / msum;
