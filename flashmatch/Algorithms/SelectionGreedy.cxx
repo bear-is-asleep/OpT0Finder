@@ -19,7 +19,6 @@ namespace flashmatch {
     _allow_reuse_flash = pset.get<bool>("AllowReuseFlash",false);
     _invert_score = pset.get<bool>("InvertScore",true);
 
-    FLASH_NORMAL() << "SelectionGreedy::_Configure_() called" << std::endl;
     FLASH_NORMAL() << "TouchMatchMaxThreshold: " << _score_max_threshold << std::endl;
     FLASH_NORMAL() << "FlashScoreMinThreshold: " << _score_min_threshold << std::endl;
     FLASH_NORMAL() << "FlashScoreMaxCeiling: " << _score_max_ceiling << std::endl;

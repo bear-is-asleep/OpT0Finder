@@ -77,10 +77,21 @@ namespace flashmatch {
     _vol_xmin = bbox.Min()[0];
 
     // Configuration statements
-    FLASH_NORMAL() << "QLLMatch configuration: " << std::endl;
-    FLASH_NORMAL() << "  - Mode: " << _mode << std::endl;
-    FLASH_NORMAL() << "  - PE observation threshold: " << _pe_observation_threshold << std::endl;
-    FLASH_NORMAL() << "  - PE hypothesis threshold: " << _pe_hypothesis_threshold << std::endl;
+    FLASH_NORMAL() << "Mode: " << _mode << std::endl;
+    FLASH_NORMAL() << "PE observation threshold: " << _pe_observation_threshold << std::endl;
+    FLASH_NORMAL() << "PE hypothesis threshold: " << _pe_hypothesis_threshold << std::endl;
+    FLASH_NORMAL() << "Chi error width: " << _chi_error << std::endl;
+    FLASH_NORMAL() << "Normalize: " << _normalize << std::endl;
+    FLASH_NORMAL() << "MIGRAD tolerance: " << _migrad_tolerance << std::endl;
+    FLASH_NORMAL() << "Offset: " << _offset << std::endl;
+    FLASH_NORMAL() << "Time shift: " << _time_shift << std::endl;
+    FLASH_NORMAL() << "Touching track window: " << _touching_track_window << std::endl;
+    FLASH_NORMAL() << "Minuit x buffer: " << _minuit_x_buffer << std::endl;
+    FLASH_NORMAL() << "Use many-to-many: " << _many_to_many << std::endl;
+    FLASH_NORMAL() << "Saturated threshold: " << _saturated_thresh << std::endl;
+    FLASH_NORMAL() << "Nonlinear threshold: " << _nonlinear_thresh << std::endl;
+    FLASH_NORMAL() << "Nonlinear slope: " << _nonlinear_slope << std::endl;
+    FLASH_NORMAL() << "Nonlinear offset: " << _nonlinear_offset << std::endl;
     
   }
 
@@ -229,6 +240,8 @@ namespace flashmatch {
     //   measured flash PE was set to 0 due to saturation
     if (_saturated_thresh > 0){
       for (size_t ich = 0; ich < DetectorSpecs::GetME().NOpDets(); ++ich ) {
+        FLASH_DEBUG() << "Checking " << ich << " for saturation" << std::endl;
+        FLASH_DEBUG() << "Hypothesis: " << one_hypothesis.pe_v[ich] << " Measurement: " << one_measurement.pe_v[ich] << std::endl;
         // if above the saturated threshold, measured is zero, is a PMT, and is not masked 
         if ((one_hypothesis.pe_v[ich] >= _saturated_thresh) && (one_measurement.pe_v[ich] == 0) && (_channel_type[ich] == 0) && (_match_mask.at(ich) == 0) && _channel_mask.at(ich)){
           FLASH_DEBUG() << "Guessing " << ich << " is saturated, setting hypothesis to 0" << std::endl;
@@ -253,9 +266,10 @@ namespace flashmatch {
       double msum = std::accumulate(one_measurement.pe_v.begin(), one_measurement.pe_v.end(), 0.0);
       if (hsum!=0) for (auto &v : one_hypothesis.pe_v) v /= hsum;
       if (msum!=0) for (auto &v : one_measurement.pe_v) v /= msum;
+      _msum = msum; // store the sum of PE in the measurement before any normalization
+      _hsum = hsum; // store the sum of PE in the hypothesis before any normalization
       // Scale the pe normalization factor if normalizing the flashes and hypothesis
       FLASH_DEBUG() << "Scaling observation threshold by " << 1/msum << std::endl;
-      FLASH_DEBUG() << "Measurement total PE: " << one_measurement.TotalPE() << std::endl;
       if (msum!=0) _pe_observation_threshold_scaled = _pe_observation_threshold / msum;
       FLASH_DEBUG() << "New observation threshold: " << _pe_observation_threshold_scaled << std::endl;
     }
@@ -513,13 +527,10 @@ namespace flashmatch {
       	//nvalid_pmt += 1;
 
       } else if (_mode == kChi2) {
-
-      	Error = O;
-        //Error = (std::pow(H*_chi_error,2)+O);
-        if( Error < _pe_observation_threshold_scaled ) Error = _pe_observation_threshold_scaled;
+        Error = std::max(O, _pe_observation_threshold_scaled);
         double chi2 = std::pow((O - H), 2) / (Error);
         _current_chi2 += chi2;
-        FLASH_DEBUG() <<"CH | O | H | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << chi2 << std::endl;
+        FLASH_DEBUG() <<"CH | O | H | E | chisq : "<<pmt_index<<", " << O << ", " << H << ", " << Error << ", " << chi2 << std::endl;
         nvalid_pmt += 1;
 
       } 

@@ -181,6 +181,9 @@ namespace flashmatch {
     double _nonlinear_thresh; // parameters to correct for nonlinear **PMT** effects
     double _nonlinear_slope;  // parameters to correct for nonlinear **PMT** effects
     double _nonlinear_offset; // parameters to correct for nonlinear **PMT** effects
+
+    double _msum=1.; // sum of PE in the measurement before any normalization
+    double _hsum=1.; // sum of PE in the hypothesis before any normalization
   };
 
   /**
