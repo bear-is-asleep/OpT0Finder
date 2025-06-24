@@ -33,8 +33,8 @@ namespace flashmatch {
     _chi_error = pset.get<double>("ChiErrorWidth", 0.0);
     _chi_error_min = pset.get<double>("ChiErrorMin", 1.0); // minimum poisson uncertainty on flash in PE. Normalized flashes are scaled by total PE.
     _chi_error_min_scaled = _chi_error_min;
-    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 1.e-12);
-    _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold", 1.e-12);
+    _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 0.);
+    _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold",0.);
     _pe_observation_threshold_scaled = _pe_observation_threshold;
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
     _offset                   = pset.get<double>("Offset", 0.0);
