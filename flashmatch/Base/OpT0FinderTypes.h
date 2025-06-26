@@ -97,7 +97,7 @@ namespace flashmatch {
     }
     /// Check validity
     bool Valid(size_t nopdet=0) const {
-      return (nopdet ? (pe_v.size() == nopdet && pe_err_v.size() == nopdet && closest_pds_v.size() == nopdet) : (pe_v.size() == pe_err_v.size() && closest_pds_v.size() == pe_err_v.size()));
+      return (nopdet ? (pe_v.size() == nopdet && pe_err_v.size() == nopdet && closest_pds_v.size() == nopdet) : (pe_v.size() == pe_err_v.size()));
     }
     //double TotalPE() const{ return std::accumulate(pe_v.begin(),pe_v.end(),0.0);}
   };
