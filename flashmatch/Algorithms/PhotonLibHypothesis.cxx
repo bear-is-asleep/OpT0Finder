@@ -199,8 +199,7 @@ namespace flashmatch {
                 double qsum = 0.;
                 double vsum = 0.;
                 for(size_t ipmt=0; ipmt < n_pmt; ++ipmt) {
-
-                    if(_channel_mask[ipmt] < 0) continue; //this is a vector of ints, mapping an index to a pmt
+                    if(_channel_mask[ipmt] == false) continue; //this is a vector of ints, mapping an index to a pmt
 
                     if(!_uncoated_pmt_list[ipmt])
 		      local_pe_v[ipmt] += pt.q * lib_data[ipmt];

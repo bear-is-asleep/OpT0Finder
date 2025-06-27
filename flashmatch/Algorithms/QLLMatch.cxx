@@ -35,7 +35,6 @@ namespace flashmatch {
     _chi_error_min_scaled = _chi_error_min;
     _pe_observation_threshold = pset.get<double>("PEObservationThreshold", 0.);
     _pe_hypothesis_threshold  = pset.get<double>("PEHypothesisThreshold",0.);
-    _pe_observation_threshold_scaled = _pe_observation_threshold;
     _migrad_tolerance         = pset.get<double>("MIGRADTolerance", 0.1);
     _offset                   = pset.get<double>("Offset", 0.0);
 		_time_shift               = pset.get<double>("BeamTimeShift", 0.0);
@@ -284,11 +283,10 @@ namespace flashmatch {
       // Scale the pe normalization factor if normalizing the flashes and hypothesis
       FLASH_DEBUG() << "Scaling observation threshold by " << 1/msum << std::endl;
       if (msum!=0){
-        _pe_observation_threshold_scaled = _pe_observation_threshold / msum; // Not used, but keep in case one wants to use it at a later date
         _chi_error_min_scaled = _chi_error_min / msum;
       }
 
-      FLASH_DEBUG() << "New observation threshold: " << _pe_observation_threshold_scaled << " and chi error min: " << _chi_error_min_scaled << std::endl;
+      FLASH_DEBUG() << "New chi error min: " << _chi_error_min_scaled << std::endl;
     }
 
     // perform likelihood calculation
@@ -508,7 +506,7 @@ namespace flashmatch {
       }
       else if(_mode == kZIP) {
         double pzero = H > _pe_hypothesis_threshold ? 0. : 1.;
-        double arg = O > _pe_observation_threshold_scaled ? (TMath::Poisson(O,H) * (1-pzero) + epsilon) : (pzero + (1 - pzero)*TMath::Exp(-H) + epsilon);
+        double arg = O > _pe_observation_threshold ? (TMath::Poisson(O,H) * (1-pzero) + epsilon) : (pzero + (1 - pzero)*TMath::Exp(-H) + epsilon);
         if(!std::isnan(arg) && !std::isinf(arg)) {
             _current_llhd -= std::log10(arg);
             nvalid_pmt += 1;

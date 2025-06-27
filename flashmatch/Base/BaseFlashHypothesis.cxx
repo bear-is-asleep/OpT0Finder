@@ -24,6 +24,11 @@ namespace flashmatch {
     if(!_chs_to_use.empty()) {
       this->SetChannelMask(_chs_to_use); // This will set the channel mask based on the channel ids
     }
+    else { //assume all channels are used
+      for (size_t i = 0; i < _channel_mask.size(); i++) {
+        _channel_mask[i] = true;
+      }
+    }
 
     _qe_v.clear();
     _qe_v = pset.get<std::vector<double> >("CCVCorrection",_qe_v);

@@ -81,7 +81,7 @@ namespace flashmatch {
       //Make a list ranging from 0 to NOpDets
       ch_touse.resize(NOpDets);
       for (size_t i= 0; i <NOpDets; i++) {
-        ch_touse[i] = true;
+        ch_touse[i] = i;
       }
     }
     this->SetChannelMask(ch_touse);
